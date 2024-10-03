@@ -4,7 +4,7 @@ import { fetchRequestHandler } from "@trpc/server/adapters/fetch";
 import { NextResponse } from "next/server";
 
 const handler = async (req: Request) => {
-  console.log("tRPC request received:", req.url);
+  // console.log("tRPC request received:", req.url);
 
   try {
     const response = await fetchRequestHandler({

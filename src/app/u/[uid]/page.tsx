@@ -1,6 +1,6 @@
 "use client";
 
-import { useMemo, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import ConnectKite from "@/components/global/connect-kite";
 import MaxWidthWrapper from "@/components/global/max-width-wrapper";
 import { useUser } from "@/hook/useUser";
@@ -11,16 +11,19 @@ import UserStockCard from "./_components/user-stock-card";
 import { P, H1, H2 } from "@/components/ui/typography";
 import { Badge } from "@/components/ui/badge";
 import MotionWrapper from "@/components/global/motion-wrapper";
+import { useToast } from "@/hook/use-toast";
+import { useRouter } from "next/navigation";
+
 
 export default function Page() {
   const { user } = useUser();
-
+  const { toast } = useToast();
+  const router = useRouter();
   const [selectedStock, setSelectedStock] = useState<string | null>(null);
 
   const {
     data: isConnected,
     isLoading,
-    isError,
     error,
   } = trpc.kite.isConnectedKite.useQuery(
     { id: user?.id?.toString() ?? "" },
@@ -38,6 +41,54 @@ export default function Page() {
 
   const memorizedStocks = useMemo(() => userStocks, [userStocks]);
 
+  // const {
+  //   mutate: updateUserKiteProfile,
+  //   isLoading: isUpdatingProfile,
+  //   isError,
+  // } = trpc.kite.updateUserKiteProfile.useMutation({
+  //   onSuccess: (data: any) => {
+  //     if (data?.success) {
+  //       toast({
+  //         title: "Kite Profile Updated",
+  //         description: "Your Kite profile has been successfully updated.",
+  //         duration: 5000,
+  //       });
+  //       router.push(`/u/${user.id}`);
+  //     } else {
+  //       // updateUserKiteProfile({ id: user?.id.toString() });
+  //     }
+  //   },
+  //   onError: (error: any) => {
+  //     // toast({
+  //     //   title: "Error",
+  //     //   description: `Failed to update Kite profile: ${error.message}`,
+  //     //   variant: "destructive",
+  //     //   duration: 5000,
+  //     // });
+  //     toast({
+  //       title: "Retrying...",
+  //       duration: 5000,
+  //     });
+  //     updateUserKiteProfile({ id: user?.id.toString() });
+  //   },
+  // });
+
+  // useEffect(() => {
+  //   if (isConnected && user && userProfileData) {
+
+  //     toast({
+  //       title: `Fetching ${userProfileData?.userName} Stocks...`,
+  //       description: "This may take a few seconds.",
+  //       duration: 2000,
+  //     })
+  //     updateUserKiteProfile({ id: user.id.toString() })
+
+
+
+  //   }
+  // }, [isConnected, user, updateUserKiteProfile, userProfileData]);
+
+
   return (
     <MaxWidthWrapper
       padding="large"
@@ -52,7 +103,7 @@ export default function Page() {
           <MotionWrapper isVisible={true} duration={0.5}>
             <Card className="shadow-lg rounded-lg border">
               <CardHeader>
-                <H1>User Profile</H1>
+                <H2>Zerodha Profile</H2>
               </CardHeader>
               <CardContent>
                 {isFetchingProfile ? (
@@ -97,24 +148,22 @@ export default function Page() {
           <MotionWrapper isVisible={true} duration={0.5}>
             <Card className="shadow-lg rounded-lg border">
               <CardHeader className="w-full flex justify-between items-start">
-                <div>
-                  <H2 className="w-full">
-                    {isFetchingStocks ? (
-                      <SkeletonLoader
-                        type="text"
-                        count={{
-                          text: 1,
-                        }}
-                      />
-                    ) : (
-                      userProfileData?.userName
-                    )}
-                    's Stocks
-                  </H2>
-                  <P className="text-gray-500">
-                    A breakdown of your portfolio holdings
-                  </P>
-                </div>
+                <H2 className="w-full">
+                  {isFetchingStocks ? (
+                    <SkeletonLoader
+                      type="text"
+                      count={{
+                        text: 1,
+                      }}
+                    />
+                  ) : (
+                    userProfileData?.userName
+                  )}
+                  's Stocks
+                </H2>
+                <P className="text-gray-500">
+                  A breakdown of your portfolio holdings
+                </P>
                 <Badge className="text-sm">
                   {memorizedStocks?.length} Stocks
                 </Badge>

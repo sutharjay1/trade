@@ -14,13 +14,14 @@ datasource db {
 }
 
 model User {
-  id        String     @id @default(uuid()) @db.Uuid
-  name      String
-  email     String     @unique
-  avatar    String?
-  createdAt DateTime   @default(now())
-  updatedAt DateTime   @updatedAt
-  UserKite  UserKite[]
+  id            String     @id @default(uuid()) @db.Uuid
+  name          String
+  email         String     @unique
+  avatar        String?
+  createdAt     DateTime   @default(now())
+  updatedAt     DateTime   @updatedAt
+  UserKite      UserKite[]
+  isKiteVerfied Boolean    @default(false)
 
   @@index([email])
   @@index([createdAt])
@@ -45,8 +46,8 @@ model UserKite {
   loginTime     DateTime
   portfolio     Portfolio[] // Relation to Portfolio model
   dematConsent  DematConsentType
-  user          User             @relation(fields: [userId], references: [id], onDelete: Cascade)
-  userId        String           @db.Uuid
+  User          User?            @relation(fields: [userId], references: [id], onDelete: Cascade)
+  userId        String?          @db.Uuid
 
   @@map("User_Kite") // Optional: Rename the table in the database if desired
 }

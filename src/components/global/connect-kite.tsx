@@ -99,7 +99,7 @@ export default function ConnectKite() {
       <Button
         variant={"secondary"}
         onClick={handleNavigateToKiteLogin}
-        disabled={isConnected}
+        // disabled={isConnected}
       >
         {isConnected ? (
           <P className="text-zinc-900 dark:text-zinc-200">Already Connected</P>

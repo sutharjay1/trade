@@ -23,142 +23,6 @@ export function generateChecksum({
 }
 
 export const kiteRouter = router({
-  // generateSession: privateProcedure
-  //   .input(
-  //     z.object({
-  //       userInfo: z.object({
-  //         id: z.number().or(z.string()),
-  //         email: z.string(),
-  //         name: z.string(),
-  //         avatar: z.string().nullable(),
-  //       }),
-  //       request_token: z.string(),
-  //     }),
-  //   )
-  //   .query(async ({ ctx, input }) => {
-  //     const { request_token, userInfo } = input;
-  //     const { session } = ctx;
-
-  //     try {
-  //       const user = await db.user.findUnique({
-  //         where: {
-  //           email: session?.user?.email as string,
-  //         },
-  //         include: {
-  //           UserKite: true,
-  //         },
-  //       });
-
-  //       if (!user) {
-  //         throw new TRPCError({
-  //           code: "NOT_FOUND",
-  //           message: "User not found",
-  //         });
-  //       }
-
-  //       const checkSum = generateChecksum({
-  //         apiKey: KITE_API_KEY,
-  //         requestToken: request_token,
-  //         apiSecret: KITE_API_KEY_SECRET,
-  //       });
-
-  //       const response = await axios.post(
-  //         "https://api.kite.trade/session/token",
-  //         new URLSearchParams({
-  //           api_key: KITE_API_KEY,
-  //           request_token: request_token,
-  //           checksum: checkSum,
-  //         }).toString(),
-  //         {
-  //           headers: {
-  //             "X-Kite-Version": "3",
-  //             "Content-Type": "application/x-www-form-urlencoded",
-  //           },
-  //         },
-  //       );
-
-  //       if (!response.data) {
-  //         throw new TRPCError({
-  //           code: "BAD_REQUEST",
-  //           message: "Failed to generate session",
-  //         });
-  //       }
-
-  //       const kiteData = response.data.data;
-  //       let userKite;
-
-  //       if (!user?.UserKite[0]?.kiteId) {
-  //         userKite = await db.userKite.create({
-  //           data: {
-  //             userId: user.id,
-  //             kiteId: kiteData.user_id,
-  //             userType: kiteData.user_type,
-  //             broker: "ZERODHA",
-  //             exchanges: kiteData.exchanges,
-  //             products: kiteData.products,
-  //             orderTypes: kiteData.order_types,
-  //             email: kiteData.email,
-  //             userName: kiteData.user_name,
-  //             apiKey: kiteData.api_key,
-  //             userShortname: kiteData.user_shortname,
-  //             accessToken: kiteData.access_token,
-  //             publicToken: kiteData.public_token,
-  //             refreshToken: kiteData.refresh_token || null,
-  //             enctoken: kiteData.enctoken,
-  //             loginTime: new Date(kiteData.login_time),
-  //             dematConsent: DematConsentType.CONSENT,
-  //           },
-  //         });
-
-  //         const findUpdatedUser = await db.user.findFirst({
-  //           where: {
-  //             id: user.id,
-  //           },
-  //           include: {
-  //             UserKite: true,
-  //           },
-  //         });
-
-  //         return {
-  //           success: true,
-  //           user: findUpdatedUser,
-  //         };
-  //       }
-
-  //       const findUpdatedUser = await db.user.findFirst({
-  //         where: {
-  //           id: user.id,
-  //         },
-  //         include: {
-  //           UserKite: true,
-  //         },
-  //       });
-  //       return {
-  //         success: true,
-  //         user: findUpdatedUser,
-  //       };
-  //     } catch (error: any) {
-  //       console.error("Error generating session:", error);
-  //       if (axios.isAxiosError(error) && error.response) {
-  //         console.error("Response data:", error.response.data);
-  //         console.error("Response status:", error.response.status);
-  //         console.error("Response headers:", error.response.headers);
-  //         throw new TRPCError({
-  //           code: "INTERNAL_SERVER_ERROR",
-  //           message: `API Error: ${error.response.status} - ${JSON.stringify(error.response.data)}`,
-  //         });
-  //       } else if (error instanceof TRPCError) {
-  //         throw error;
-  //       } else {
-  //         console.error("Error message:", error);
-  //         throw new TRPCError({
-  //           code: "INTERNAL_SERVER_ERROR",
-  //           message: `Unexpected error: ${error}`,
-  //         });
-  //       }
-  //     }
-  //   }),
-
   generateSession: privateProcedure
     .input(
       z.object({
@@ -171,7 +35,7 @@ export const kiteRouter = router({
         request_token: z.string(),
       }),
     )
-    .query(async ({ ctx, input }) => {
+    .mutation(async ({ ctx, input }) => {
       const { request_token, userInfo } = input;
       const { session } = ctx;
 
@@ -373,7 +237,11 @@ export const kiteRouter = router({
           id: input.id,
         },
         include: {
-          UserKite: true,
+          UserKite: {
+            include: {
+              portfolio: true,
+            },
+          },
         },
       });
 
@@ -390,7 +258,7 @@ export const kiteRouter = router({
         },
         include: {
           portfolio: true,
-          user: true,
+          User: true,
         },
       });
 
@@ -419,7 +287,11 @@ export const kiteRouter = router({
 
         const data = await response.json();
 
-        if (userKite.portfolio.length === 0) {
+        const existingStocks = user.UserKite[0].portfolio;
+
+        console.log(`Existing stocks: ${JSON.stringify(existingStocks)}`);
+
+        if (!user.isKiteVerfied) {
           const portfolios = data.data.map((stock: any) => ({
             tradingSymbol: stock.tradingsymbol,
             exchange: stock.exchange,
@@ -454,13 +326,13 @@ export const kiteRouter = router({
             .then(() => {
               console.log("Portfolios created successfully");
             });
-        }
 
-        console.log(`User profile:`, data);
-        return {
-          success: true,
-          data,
-        };
+          console.log(`User profile:`, data);
+          return {
+            success: true,
+            data,
+          };
+        }
       } catch (error) {
         console.error("Error  fetching user profile:", error);
         // redirect(`/u/${id}`);
@@ -485,7 +357,7 @@ export const kiteRouter = router({
           UserKite: {
             include: {
               portfolio: true,
-              user: true,
+              User: true,
             },
           },
         },
@@ -502,7 +374,7 @@ export const kiteRouter = router({
         const data = await db.portfolio.findMany({
           where: {
             userKite: {
-              user: {
+              User: {
                 id: user.id,
               },
             },
