@@ -117,6 +117,7 @@ import { useUser } from "@/hook/useUser";
 import { Toaster } from "@/components/ui/toaster";
 import { useToast } from "@/hook/use-toast";
 import Loading from "@/components/global/loading";
+import { isPortfolioConnected } from "./_actions/update-user-kite-profile";
 
 export default function Kite() {
   const param = useSearchParams();
@@ -125,6 +126,9 @@ export default function Kite() {
   const requestTokenFromParam = param.get("request_token");
   const { setRequestToken } = useKiteRequest();
   const { user } = useUser();
+  const [isUpdatedProfile, setIsUpdatedProfile] = useState(false);
+
+  const isPortfolioConnectedSuccess = isPortfolioConnected({ id: user?.id.toString() });
 
   const {
     mutate: generateSession,
@@ -133,16 +137,22 @@ export default function Kite() {
   } = trpc.kite.generateSession.useMutation({
     onSuccess: (data) => {
       if (data?.success && user?.id) {
+        console.log(`on success data`)
         updateUserKiteProfile({ id: user.id.toString() });
       }
     },
     onError: (error: any) => {
+      console.log(`on error `)
       toast({
         title: "Retrying...",
         duration: 5000,
       });
+      setIsUpdatedProfile(true);
 
-      updateUserKiteProfile({ id: user?.id.toString() });
+      if (!isPortfolioConnectedSuccess) {
+
+        updateUserKiteProfile({ id: user?.id.toString() });
+      }
     },
     retry: 0,
   });
@@ -175,6 +185,7 @@ export default function Kite() {
         title: "Retrying...",
         duration: 5000,
       });
+      console.log(`on error inside update user kite profile `)
       updateUserKiteProfile({ id: user?.id.toString() });
     },
   });
