@@ -1,0 +1,96 @@
+// This is your Prisma schema file,
+// learn more about it in the docs: https://pris.ly/d/prisma-schema
+
+// Looking for ways to speed up your queries, or scale easily with your serverless or edge functions?
+// Try Prisma Accelerate: https://pris.ly/cli/accelerate-init
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+model User {
+  id        String     @id @default(uuid()) @db.Uuid
+  name      String
+  email     String     @unique
+  avatar    String?
+  createdAt DateTime   @default(now())
+  updatedAt DateTime   @updatedAt
+  UserKite  UserKite[]
+
+  @@index([email])
+  @@index([createdAt])
+}
+
+model UserKite {
+  id            String           @id @default(cuid())
+  kiteId        String           @unique
+  userType      String
+  broker        BrokerType
+  exchanges     String[] // List of exchanges
+  products      String[] // List of products
+  orderTypes    String[] // List of order types
+  email         String
+  userName      String
+  apiKey        String
+  userShortname String
+  accessToken   String? // Nullable field for access token
+  publicToken   String
+  refreshToken  String? // Nullable field for refresh token
+  enctoken      String
+  loginTime     DateTime
+  portfolio     Portfolio[] // Relation to Portfolio model
+  dematConsent  DematConsentType
+  user          User             @relation(fields: [userId], references: [id], onDelete: Cascade)
+  userId        String           @db.Uuid
+
+  @@map("user_kite") // Optional: Rename the table in the database if desired
+}
+
+model Portfolio {
+  id                  String   @id @default(cuid())
+  tradingSymbol       String
+  exchange            String
+  instrumentToken     Int
+  isin                String
+  product             String
+  price               Float
+  quantity            Float
+  usedQuantity        Float
+  t1Quantity          Float
+  realisedQuantity    Float
+  authorisedQuantity  Float
+  authorisedDate      DateTime @map("authorised_date")
+  openingQuantity     Float
+  collateralQuantity  Float
+  collateralType      String   @default("") // Set empty string as default
+  discrepancy         Boolean
+  averagePrice        Float    @map("average_price")
+  lastPrice           Float    @map("last_price")
+  closePrice          Float    @map("close_price")
+  pnl                 Float
+  dayChange           Float    @map("day_change")
+  dayChangePercentage Float    @map("day_change_percentage")
+  userKiteId          String
+  userKite            UserKite @relation(fields: [userKiteId], references: [id], onDelete: Cascade)
+
+  @@map("portfolio")
+}
+
+// Enum for Broker Type
+enum BrokerType {
+  INDIVIDUAL
+  ZERODHA
+  OTHER // Add other brokers as necessary
+}
+
+// Enum for Demat Consent Type
+enum DematConsentType {
+  CONSENT
+  NO_CONSENT
+  PHYSICAL // Additional option
+}
