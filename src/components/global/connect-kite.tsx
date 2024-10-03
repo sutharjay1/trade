@@ -101,7 +101,11 @@ export default function ConnectKite() {
         onClick={handleNavigateToKiteLogin}
         disabled={isConnected}
       >
-        {isConnected ? <P className="text-zinc-900 dark:text-zinc-200">Already Connected</P> : <P className="text-zinc-900 dark:text-zinc-200">Connect Kite</P>}
+        {isConnected ? (
+          <P className="text-zinc-900 dark:text-zinc-200">Already Connected</P>
+        ) : (
+          <P className="text-zinc-900 dark:text-zinc-200">Connect Kite</P>
+        )}
       </Button>
     </div>
   );

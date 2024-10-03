@@ -27,7 +27,7 @@ model User {
 }
 
 model UserKite {
-  id            String           @id @default(cuid())
+  id            String           @id @default(uuid()) @db.Uuid
   kiteId        String           @unique
   userType      String
   broker        BrokerType
@@ -48,11 +48,11 @@ model UserKite {
   user          User             @relation(fields: [userId], references: [id], onDelete: Cascade)
   userId        String           @db.Uuid
 
-  @@map("user_kite") // Optional: Rename the table in the database if desired
+  @@map("User_Kite") // Optional: Rename the table in the database if desired
 }
 
 model Portfolio {
-  id                  String   @id @default(cuid())
+  id                  String   @id @default(uuid()) @db.Uuid
   tradingSymbol       String
   exchange            String
   instrumentToken     Int
@@ -75,10 +75,11 @@ model Portfolio {
   pnl                 Float
   dayChange           Float    @map("day_change")
   dayChangePercentage Float    @map("day_change_percentage")
-  userKiteId          String
-  userKite            UserKite @relation(fields: [userKiteId], references: [id], onDelete: Cascade)
 
-  @@map("portfolio")
+  userKiteId String   @db.Uuid // This field needs to be changed to match the UUID type
+  userKite   UserKite @relation(fields: [userKiteId], references: [id], onDelete: Cascade)
+
+  @@map("Portfolio")
 }
 
 // Enum for Broker Type

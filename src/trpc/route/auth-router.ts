@@ -23,15 +23,20 @@ export const authRouter = router({
           email: session.user?.email as string,
         },
       });
+
+      console.log("dbUser", dbUser, session.user?.email);
+
       if (!dbUser) {
-        await db.user.create({
+        const newUser = await db.user.create({
           data: {
             email: session.user?.email as string,
             name: session.user?.name as string,
             avatar: session.user?.image as string,
           },
         });
+        return { success: true, user: newUser };
       }
+
       return { success: true, user: dbUser };
     }),
 

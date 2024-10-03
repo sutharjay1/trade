@@ -17,14 +17,6 @@ export default function Page() {
 
   const [selectedStock, setSelectedStock] = useState<string | null>(null);
 
-  const { data: userProfileData, isLoading: isFetchingProfile } =
-    trpc.kite.getUserKite.useQuery({ id: user.id.toString() }, { retry: 0 });
-
-  const { data: userStocks, isLoading: isFetchingStocks } =
-    trpc.kite.getUserPortfolioStocks.useQuery({ id: user.id.toString() });
-
-  const memorizedStocks = useMemo(() => userStocks, [userStocks]);
-
   const {
     data: isConnected,
     isLoading,
@@ -34,6 +26,17 @@ export default function Page() {
     { id: user?.id?.toString() ?? "" },
     { enabled: !!user?.id },
   );
+
+  const { data: userProfileData, isLoading: isFetchingProfile } =
+    trpc.kite.getUserKite.useQuery(
+      { id: user.id.toString() },
+      { retry: 0, enabled: !isConnected },
+    );
+
+  const { data: userStocks, isLoading: isFetchingStocks } =
+    trpc.kite.getUserPortfolioStocks.useQuery({ id: user.id.toString() });
+
+  const memorizedStocks = useMemo(() => userStocks, [userStocks]);
 
   return (
     <MaxWidthWrapper
@@ -45,9 +48,6 @@ export default function Page() {
       <ConnectKite />
 
       {isConnected && (
-
-
-
         <div className="space-y-10">
           <MotionWrapper isVisible={true} duration={0.5}>
             <Card className="shadow-lg rounded-lg border">

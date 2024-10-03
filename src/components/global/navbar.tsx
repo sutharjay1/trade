@@ -50,7 +50,7 @@ const Header = () => {
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
   const [currentHash, setCurrentHash] = useState<string>("");
 
-  const { user } = useUser()
+  const { user } = useUser();
 
   const handleNavLinkClick = (link: NavLinkProps) => {
     setCurrentHash(link.href.split("#")[1]);
@@ -378,8 +378,9 @@ const Header = () => {
                           {link.title}
                           {link.submenu ? (
                             <BiChevronDown
-                              className={`h-4 w-4 transition-transform ${expandedMenu === link.title ? "rotate-180" : ""
-                                } ml-2`}
+                              className={`h-4 w-4 transition-transform ${
+                                expandedMenu === link.title ? "rotate-180" : ""
+                              } ml-2`}
                             />
                           ) : null}
                         </span>
@@ -407,14 +408,13 @@ const Header = () => {
                 <>
                   <Button
                     className="group flex h-10 w-full items-center justify-center gap-1.5 rounded-lg border  sm:h-8 sm:w-36"
-                    onClick={() =>
-                      router.push(`/u/${user?.id.toString()}`)
-                    }
+                    onClick={() => router.push(`/u/${user?.id.toString()}`)}
                   >
-                    <span className="text-zinc-300 dark:text-zinc-900">Profile</span>
+                    <span className="text-zinc-300 dark:text-zinc-900">
+                      Profile
+                    </span>
                     <User className="mr-2 h-4 w-4" />
                   </Button>
-
 
                   <Button
                     className="group flex h-10 w-full items-center justify-center gap-1.5 rounded-lg border  sm:h-8 sm:w-36"
@@ -432,7 +432,6 @@ const Header = () => {
                   onClick={handleLogin}
                 >
                   <span className="text-zinc-300 dark:text-zinc-900">
-
                     Sign in
                   </span>
                   <HiMiniArrowLongRight className="h-5 w-5 text-zinc-200 transition-all group-hover:translate-x-1 dark:text-zinc-300" />
