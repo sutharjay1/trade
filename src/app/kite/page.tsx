@@ -1,110 +1,3 @@
-// "use client";
-
-// import React, { useState, useEffect } from "react";
-// import MaxWidthWrapper from "@/components/global/max-width-wrapper";
-// import ConnectKite from "@/components/global/connect-kite";
-// import { useRouter, useSearchParams } from "next/navigation";
-// import { useKiteRequest } from "@/hook/use-kite-request";
-// import { trpc } from "@/trpc/client";
-// import { useUser } from "@/hook/useUser";
-// import { Toaster } from "@/components/ui/toaster";
-// import { useToast } from "@/hook/use-toast";
-// import Loading from "@/components/global/loading";
-
-// export default function Kite() {
-//   const param = useSearchParams();
-//   const router = useRouter();
-//   const { toast } = useToast();
-//   const requestTokenFromParam = param.get("request_token");
-//   const { setRequestToken } = useKiteRequest();
-//   const { user } = useUser();
-
-//   const {
-//     data,
-//     isLoading: isMutating,
-//     isSuccess,
-//   } = trpc.kite.generateSession.useQuery(
-//     {
-//       request_token: requestTokenFromParam as string,
-//       userInfo: user,
-//     },
-//     {
-//       enabled: !!requestTokenFromParam && !!user,
-//     },
-//   );
-
-//   const { mutate: updateUserKiteProfile, isLoading: isUpdatingProfile } =
-//     trpc.kite.updateUserKiteProfile.useMutation({
-//       onSuccess: (data) => {
-//         if (data?.success) {
-//           toast({
-//             title: "Kite Profile Updated",
-//             description: "Your Kite profile has been successfully updated.",
-//             duration: 5000,
-//           });
-//         } else {
-//           toast({
-//             title: "Update Failed",
-//             description:
-//               "Failed to update your Kite profile. Please try again.",
-//             variant: "destructive",
-//             duration: 5000,
-//           });
-//         }
-//       },
-//       onError: (error: any) => {
-//         toast({
-//           title: "Error",
-//           description: `Failed to update Kite profile: ${error.message}`,
-//           variant: "destructive",
-//           duration: 5000,
-//         });
-//       },
-//     });
-
-//   useEffect(() => {
-//     if (requestTokenFromParam && user) {
-//       setRequestToken(requestTokenFromParam);
-//     }
-//   }, [user, requestTokenFromParam, setRequestToken]);
-
-//   useEffect(() => {
-//     if (data?.success && user?.id) {
-//       updateUserKiteProfile({
-//         id: user.id.toString(),
-//       });
-//     }
-//   }, [data?.success, user, updateUserKiteProfile]);
-
-//   useEffect(() => {
-//     if (data?.success && user?.id && !isUpdatingProfile) {
-//       toast({
-//         title: "Connection Successful",
-//         description: "Your Kite account has been successfully connected.",
-//         duration: 5000,
-//       });
-//       router.push(`/u/${user.id}`);
-//     }
-//   }, [isSuccess, data?.success, user, router, isUpdatingProfile, toast]);
-
-//   return (
-//     <MaxWidthWrapper padding="large" paddingTop="large" maxw="max-w-8xl">
-//       <ConnectKite />
-//       {(isMutating || isUpdatingProfile) && (
-//         <div className="flex flex-col items-center justify-center mt-8">
-//           <Loading className="h-10 w-10 animate-spin" />
-//           <p className="mt-4 text-lg text-zinc-900 dark:text-zinc-300">
-//             {isMutating
-//               ? "Generating data from session..."
-//               : "Updating profile..."}
-//           </p>
-//         </div>
-//       )}
-//       <Toaster />
-//     </MaxWidthWrapper>
-//   );
-// }
-
 "use client";
 
 import React, { useState, useEffect } from "react";
@@ -128,7 +21,9 @@ export default function Kite() {
   const { user } = useUser();
   const [isUpdatedProfile, setIsUpdatedProfile] = useState(false);
 
-  const isPortfolioConnectedSuccess = isPortfolioConnected({ id: user?.id.toString() });
+  const isPortfolioConnectedSuccess = isPortfolioConnected({
+    id: user?.id.toString(),
+  });
 
   const {
     mutate: generateSession,
@@ -137,12 +32,12 @@ export default function Kite() {
   } = trpc.kite.generateSession.useMutation({
     onSuccess: (data) => {
       if (data?.success && user?.id) {
-        console.log(`on success data`)
+        console.log(`on success data`);
         updateUserKiteProfile({ id: user.id.toString() });
       }
     },
     onError: (error: any) => {
-      console.log(`on error `)
+      console.log(`on error `);
       toast({
         title: "Retrying...",
         duration: 5000,
@@ -150,7 +45,6 @@ export default function Kite() {
       setIsUpdatedProfile(true);
 
       if (!isPortfolioConnectedSuccess) {
-
         updateUserKiteProfile({ id: user?.id.toString() });
       }
     },
@@ -170,22 +64,14 @@ export default function Kite() {
           duration: 5000,
         });
         router.push(`/u/${user.id}`);
-      } else {
-        // updateUserKiteProfile({ id: user?.id.toString() });
       }
     },
     onError: (error: any) => {
-      // toast({
-      //   title: "Error",
-      //   description: `Failed to update Kite profile: ${error.message}`,
-      //   variant: "destructive",
-      //   duration: 5000,
-      // });
       toast({
         title: "Retrying...",
         duration: 5000,
       });
-      console.log(`on error inside update user kite profile `)
+      console.log(`on error inside update user kite profile `);
       updateUserKiteProfile({ id: user?.id.toString() });
     },
   });

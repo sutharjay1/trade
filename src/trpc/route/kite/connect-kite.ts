@@ -56,7 +56,6 @@ export const kiteRouter = router({
           });
         }
 
-        // Log request details for debugging
         console.log("Generating checksum with:", {
           apiKey: KITE_API_KEY,
           requestToken: request_token,
@@ -197,7 +196,7 @@ export const kiteRouter = router({
   getUserKite: privateProcedure
     .input(
       z.object({
-        id: z.string().uuid(), // Validate that the input is a proper UUID
+        id: z.string().uuid(),
       }),
     )
     .query(async ({ ctx, input }) => {

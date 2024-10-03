@@ -14,12 +14,9 @@ import MotionWrapper from "@/components/global/motion-wrapper";
 import { useToast } from "@/hook/use-toast";
 import { useRouter } from "next/navigation";
 
-
 export default function Page() {
   const { user } = useUser();
   const { toast } = useToast();
-  const router = useRouter();
-  const [selectedStock, setSelectedStock] = useState<string | null>(null);
 
   const {
     data: isConnected,
@@ -40,54 +37,6 @@ export default function Page() {
     trpc.kite.getUserPortfolioStocks.useQuery({ id: user.id.toString() });
 
   const memorizedStocks = useMemo(() => userStocks, [userStocks]);
-
-  // const {
-  //   mutate: updateUserKiteProfile,
-  //   isLoading: isUpdatingProfile,
-  //   isError,
-  // } = trpc.kite.updateUserKiteProfile.useMutation({
-  //   onSuccess: (data: any) => {
-  //     if (data?.success) {
-  //       toast({
-  //         title: "Kite Profile Updated",
-  //         description: "Your Kite profile has been successfully updated.",
-  //         duration: 5000,
-  //       });
-  //       router.push(`/u/${user.id}`);
-  //     } else {
-  //       // updateUserKiteProfile({ id: user?.id.toString() });
-  //     }
-  //   },
-  //   onError: (error: any) => {
-  //     // toast({
-  //     //   title: "Error",
-  //     //   description: `Failed to update Kite profile: ${error.message}`,
-  //     //   variant: "destructive",
-  //     //   duration: 5000,
-  //     // });
-  //     toast({
-  //       title: "Retrying...",
-  //       duration: 5000,
-  //     });
-  //     updateUserKiteProfile({ id: user?.id.toString() });
-  //   },
-  // });
-
-  // useEffect(() => {
-  //   if (isConnected && user && userProfileData) {
-
-  //     toast({
-  //       title: `Fetching ${userProfileData?.userName} Stocks...`,
-  //       description: "This may take a few seconds.",
-  //       duration: 2000,
-  //     })
-  //     updateUserKiteProfile({ id: user.id.toString() })
-
-
-
-  //   }
-  // }, [isConnected, user, updateUserKiteProfile, userProfileData]);
-
 
   return (
     <MaxWidthWrapper

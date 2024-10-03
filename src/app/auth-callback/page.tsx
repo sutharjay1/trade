@@ -33,7 +33,6 @@ const AuthCallbackPage = () => {
     },
     onError: (error) => {
       console.error("Auth callback error:", error);
-      // Handle error (e.g., show error message)
     },
   });
 
@@ -60,7 +59,7 @@ const AuthCallbackPage = () => {
     );
   }
 
-  return null; // The page will redirect before rendering anything
+  return null;
 };
 
 export default AuthCallbackPage;
