@@ -13,10 +13,14 @@ import { Badge } from "@/components/ui/badge";
 import MotionWrapper from "@/components/global/motion-wrapper";
 import { useToast } from "@/hook/use-toast";
 import { useRouter } from "next/navigation";
+import { formatPrice } from "@/lib/utils";
+import { TrendingDown, TrendingUp } from "lucide-react";
 
 export default function Page() {
   const { user } = useUser();
   const { toast } = useToast();
+  const [totalInvestedValue, setTotalInvestedValue] = useState<number>(0);
+  const [currentPL, setCurrentPL] = useState<number>(0);
 
   const {
     data: isConnected,
@@ -37,6 +41,26 @@ export default function Page() {
     trpc.kite.getUserPortfolioStocks.useQuery({ id: user.id.toString() });
 
   const memorizedStocks = useMemo(() => userStocks, [userStocks]);
+
+  const totalInvested = useMemo(() => {
+    if (!memorizedStocks) {
+      return 0;
+    }
+
+    setTotalInvestedValue(
+      memorizedStocks.reduce(
+        (acc, stock) => acc + stock.averagePrice * stock.quantity,
+        0,
+      ),
+    );
+    setCurrentPL(
+      memorizedStocks.reduce(
+        (acc, stock) =>
+          acc + (stock.lastPrice - stock.averagePrice) * stock.quantity,
+        0,
+      ),
+    );
+  }, [memorizedStocks]);
 
   return (
     <MaxWidthWrapper
@@ -59,7 +83,7 @@ export default function Page() {
                   <SkeletonLoader
                     type="text"
                     count={{
-                      text: 6,
+                      text: 7,
                     }}
                   />
                 ) : userProfileData ? (
@@ -85,6 +109,19 @@ export default function Page() {
                     <P>
                       <strong>Exchanges:</strong>{" "}
                       {JSON.stringify(userProfileData.exchanges, null, 2)}
+                    </P>
+                    <P>
+                      <strong>Total Invested:</strong>{" "}
+                      {formatPrice(totalInvestedValue)}
+                    </P>
+                    <P>
+                      <strong>Total Gain:</strong>{" "}
+                      {formatPrice(totalInvestedValue + currentPL)}
+                    </P>
+                    <P className="flex items-center justify-start gap-2">
+                      <strong>Total P&L: </strong>
+                      {formatPrice(currentPL)}
+                      {currentPL >= 0 ? <TrendingUp /> : <TrendingDown />}
                     </P>
                   </div>
                 ) : (
