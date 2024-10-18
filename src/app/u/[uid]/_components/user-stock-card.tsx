@@ -1,27 +1,17 @@
 "use client";
 
-import React from "react";
 import MotionWrapper from "@/components/global/motion-wrapper";
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { formatPrice, stockGraphColor } from "@/lib/utils";
-import { STOCKS } from "@/type";
-import { useTheme } from "next-themes";
-import { useEffect, useRef, useState } from "react";
-import { relatedCompany } from "../_actions/related-company";
-import { Portfolio } from "@prisma/client";
-import Modal from "@/components/modals/user-stock-modal";
-import { useModal } from "@/hook/use-modal";
-import {
-  DialogContent,
-  DialogDescription,
-  DialogHeader,
-  DialogTitle,
-} from "@/components/ui/dialog";
-import { Drawer, DrawerContent, DrawerTrigger } from "@/components/ui/drawer";
-import { useMediaQuery } from "react-responsive";
-import { P } from "@/components/ui/typography";
 import { Badge } from "@/components/ui/badge";
+import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { P } from "@/components/ui/typography";
+import { useModal } from "@/hook/use-modal";
+import { formatPrice, stockGraphColor } from "@/lib/utils";
+import { Portfolio } from "@prisma/client";
 import { TrendingDown, TrendingUp } from "lucide-react";
+import { useTheme } from "next-themes";
+import Link from "next/link";
+import { useEffect, useRef, useState } from "react";
+import { useMediaQuery } from "react-responsive";
 
 type Props = {
   stock: Portfolio | any;
@@ -63,153 +53,57 @@ const UserStockCard = ({ stock }: Props) => {
       }
     };
   }, [stock, theme]);
+
   const { isOpen, modalType, onClose, onOpen, stockData, updateStockData } =
     useModal();
-
-  const handleCardClick = async () => {
-    setSelectedStock(stock);
-    updateStockData(stock);
-    onOpen("VIEW_STOCK");
-  };
 
   const [isDrawerOpen, setIsDrawerOpen] = useState(false);
 
   const isMobile = useMediaQuery({ query: "(max-width: 768px)" });
 
-  const toggleDrawer = () => {
-    setSelectedStock(stock);
-    setIsDrawerOpen((prev) => !prev);
-  };
-
   return (
     <>
       <MotionWrapper isVisible={true} duration={0.99} className="w-full">
-        <Card
-          onClick={handleCardClick}
-          className="shadow-lg transition-transform transform "
-        >
-          <CardHeader>
-            <CardTitle className="text-xl font-bold">
-              {stock.tradingSymbol}
-            </CardTitle>
-            <span className="text-sm text-gray-500">{stock.exchange}</span>
-          </CardHeader>
-          <CardContent className="p-4">
-            <div className="grid grid-cols-2 gap-4 mb-4">
-              <div>
-                <P className="text-sm font-semibold">Opening Price</P>
-                <P className="text-lg text-green-600">
-                  {formatPrice(stock.openingQuantity.toFixed(2))}
-                </P>
-              </div>
-              <div>
-                <P className="text-sm font-semibold">Closing Price</P>
-                <P className="text-lg text-red-600">
-                  {formatPrice(stock.closePrice.toFixed(2))}
-                </P>
-              </div>
-              <div>
-                <P className="text-sm font-semibold">Average Price</P>
-                <P className="text-lg">
-                  {formatPrice(stock.averagePrice.toFixed(2))}
-                </P>
-              </div>
-              <div>
-                <P className="text-sm font-semibold">Last Price</P>
-                <P className="text-lg">
-                  {formatPrice(stock.lastPrice.toFixed(2))}
-                </P>
-              </div>
-              <div>
-                <P className="text-sm font-semibold">P&L</P>
-                <P
-                  className={`text-lg ${stock.pnl >= 0 ? "text-green-600" : "text-red-600"}`}
-                >
-                  {formatPrice(stock.pnl.toFixed(2))}
-                </P>
-              </div>
-              <div>
-                <P className="text-sm font-semibold">Day Change %</P>
-                <div className="flex items-center justify-start gap-2">
-                  <Badge
-                    size="sm"
-                    rounded="sm"
-                    variant={
-                      stock.dayChangePercentage >= 0 ? "success" : "destructive"
-                    }
-                    className="text-base "
-                  >
-                    {stock.dayChangePercentage.toFixed(2)}%
-                  </Badge>
-                  {stock.dayChangePercentage >= 0 ? (
-                    <TrendingUp />
-                  ) : (
-                    <TrendingDown />
-                  )}
-                </div>
-              </div>
-            </div>
-            <div
-              className="tradingview-widget-container overflow-hidden"
-              ref={userStocksRef}
-            ></div>
-            {relatedCompanyData && (
-              <div className="mt-4 border-t border-gray-300 pt-4">
-                <h3 className="text-sm font-semibold">Related Company:</h3>
-                <P>{relatedCompanyData.name}</P>
-                <P>{relatedCompanyData.description}</P>
-              </div>
-            )}
-          </CardContent>
-        </Card>
-      </MotionWrapper>
-
-      <Modal className="space-y-4 p-4">
-        {/* <DialogHeader>
-          <DialogTitle>{stock.tradingSymbol}</DialogTitle>
-        </DialogHeader> */}
-        <MotionWrapper isVisible={true} duration={0.99} className="w-full">
-          <Card className="shadow-lg transition-transform transform">
+        <Link href={`/stock/${stock.tradingSymbol}`}>
+          <Card className="shadow-lg transition-transform transform ">
             <CardHeader>
               <CardTitle className="text-xl font-bold">
-                {stockData?.tradingSymbol}
+                {stock.tradingSymbol}
               </CardTitle>
-              <span className="text-sm text-gray-500">
-                {stockData?.exchange}
-              </span>
+              <span className="text-sm text-gray-500">{stock.exchange}</span>
             </CardHeader>
             <CardContent className="p-4">
               <div className="grid grid-cols-2 gap-4 mb-4">
                 <div>
                   <P className="text-sm font-semibold">Opening Price</P>
                   <P className="text-lg text-green-600">
-                    {formatPrice(stockData?.openingQuantity.toFixed(2))}
+                    {formatPrice(stock.lastPrice.toFixed(2))}
                   </P>
                 </div>
                 <div>
                   <P className="text-sm font-semibold">Closing Price</P>
                   <P className="text-lg text-red-600">
-                    {formatPrice(stockData?.closePrice.toFixed(2))}
+                    {formatPrice(stock.closePrice.toFixed(2))}
                   </P>
                 </div>
                 <div>
                   <P className="text-sm font-semibold">Average Price</P>
                   <P className="text-lg">
-                    {formatPrice(stockData?.averagePrice.toFixed(2))}
+                    {formatPrice(stock.averagePrice.toFixed(2))}
                   </P>
                 </div>
                 <div>
                   <P className="text-sm font-semibold">Last Price</P>
                   <P className="text-lg">
-                    {formatPrice(stockData?.lastPrice.toFixed(2))}
+                    {formatPrice(stock.lastPrice.toFixed(2))}
                   </P>
                 </div>
                 <div>
                   <P className="text-sm font-semibold">P&L</P>
                   <P
-                    className={`text-lg ${stockData?.pnl! >= 0 ? "text-green-600" : "text-red-600"}`}
+                    className={`text-lg ${stock.pnl >= 0 ? "text-green-600" : "text-red-600"}`}
                   >
-                    {formatPrice(stockData?.pnl.toFixed(2))}
+                    {formatPrice(stock.pnl.toFixed(2))}
                   </P>
                 </div>
                 <div>
@@ -219,15 +113,15 @@ const UserStockCard = ({ stock }: Props) => {
                       size="sm"
                       rounded="sm"
                       variant={
-                        stockData.dayChangePercentage >= 0
+                        stock.dayChangePercentage >= 0
                           ? "success"
                           : "destructive"
                       }
                       className="text-base "
                     >
-                      {stockData.dayChangePercentage.toFixed(2)}%
+                      {stock.dayChangePercentage.toFixed(2)}%
                     </Badge>
-                    {stockData.dayChangePercentage >= 0 ? (
+                    {stock.dayChangePercentage >= 0 ? (
                       <TrendingUp />
                     ) : (
                       <TrendingDown />
@@ -248,8 +142,8 @@ const UserStockCard = ({ stock }: Props) => {
               )}
             </CardContent>
           </Card>
-        </MotionWrapper>
-      </Modal>
+        </Link>
+      </MotionWrapper>
     </>
   );
 };

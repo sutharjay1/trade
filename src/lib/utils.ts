@@ -99,3 +99,7 @@ export function stockGraphColor(connectionId: string) {
 export function colorToCSS(color: Color) {
   return `#${color.r.toString(16).padStart(2, "0")}${color.g.toString(16).padStart(2, "0")}${color.b.toString(16).padStart(2, "0")}`;
 }
+
+export const formatKey = (key: string) => {
+  return key.replace(/([A-Z])/g, " $1").trim(); // Add space before uppercase letters
+};

@@ -78,11 +78,6 @@ const Chart = ({ params }: Props) => {
 
   return (
     <div className="flex flex-col min-h-screen">
-      {/* <Card>
-                <CardHeader>
-                    <CardTitle>{stock}</CardTitle>
-                </CardHeader>
-            </Card> */}
       <div className="flex flex-grow h-full">
         <div
           className="tradingview-widget-container overflow-hidden h-screen flex-1 flex-grow "

@@ -32,6 +32,7 @@ import {
 
 import ToggleTheme from "./toggle-theme";
 import { useUser } from "@/hook/useUser";
+import { geistSans } from "@/lib/font";
 
 interface NavLinkProps {
   href: string;
@@ -142,29 +143,35 @@ const Header = () => {
   };
 
   return (
-    <header className="fixed inset-x-0 top-1 z-50 mx-auto flex max-w-8xl items-center">
+    <header
+      className={cn(
+        "fixed left-0 right-0 top-0 z-10 py-1 flex  items-center justify-between border-b-[1px] border-neutral-900/20 bg-background px-8   backdrop-blur-sm ",
+        geistSans.className,
+      )}
+    >
       <Sheet open={isOpen} onOpenChange={setIsOpen}>
         {session.data === null ? (
           <MaxWidthWrapper
             className="w-full px-1"
             padding="small"
-            maxw="max-w-8xl"
+            maxw="max-w-6xl"
           >
-            <div className="relative mx-1 mt-4 flex items-center justify-between rounded-xl bg-background/[0.982] px-2 py-1 drop-shadow-md sm:mx-0 md:py-0  ">
+            <div className="relative   flex items-center justify-between  ">
               <Link
-                href={"/"}
+                href={user ? `/u/${user?.id}` : "/"}
                 aria-label="home"
                 className="mr-4 flex items-center justify-center"
               >
-                <div className="ml-2 md:ml-4">
-                  <AppLogo />
-                </div>
+                <AppLogo />
               </Link>
 
               {pathname.includes("/") && (
                 <nav
                   role="navigation"
-                  className="w-nav-menu static ml-4 hidden lg:flex"
+                  className={cn(
+                    "w-nav-menu static ml-4 hidden lg:flex",
+                    user && "hidden",
+                  )}
                 >
                   <NavigationMenu className="hidden lg:flex">
                     <NavigationMenuList>
@@ -264,11 +271,9 @@ const Header = () => {
           </MaxWidthWrapper>
         ) : (
           <MaxWidthWrapper className="px-2">
-            <div className="relative mx-1 mt-4 flex items-center justify-between rounded-xl py-2 pl-4 px-2 shadow-sm backdrop-blur-xl sm:mx-0 md:py-1.5">
+            <div className="relative   flex items-center py-2  justify-between  ">
               <Link href={"/"} aria-label="home" className="mr-4">
-                <div className="md:ml-4">
-                  <AppLogo />
-                </div>
+                <AppLogo />
               </Link>
 
               <nav
@@ -357,10 +362,10 @@ const Header = () => {
           </SheetHeader>
 
           <div
-            className="fixed inset-0 top-16 z-50 mt-2 flex w-full flex-col items-center justify-start bg-opacity-95 md:top-20 lg:hidden lg:backdrop-blur-xl"
+            className="fixed inset-0 top-16 z-50 mt-2 flex w-full flex-col items-center justify-start bg-opacity-95 md:top-20 lg:hidden  "
             onClick={() => setMobileMenuOpen(false)}
           >
-            <div className="flex w-full flex-col gap-8 px-3 py-5">
+            <div className={cn("flex w-full flex-col gap-8 px-3 py-5")}>
               <NavigationMenu className="grid w-full place-items-start">
                 <NavigationMenuList className="mt-6 grid flex-1 gap-y-4 pt-4">
                   {NAV_LINKS.map((link) => (

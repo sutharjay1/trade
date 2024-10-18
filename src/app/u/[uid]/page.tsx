@@ -133,8 +133,8 @@ export default function Page() {
 
           <MotionWrapper isVisible={true} duration={0.5}>
             <Card className="shadow-lg rounded-lg border">
-              <CardHeader className="w-full flex justify-between items-start">
-                <H2 className="w-full">
+              <CardHeader className="w-full flex-1 flex justify-between items-start">
+                <H2 className="w-fit border-b-0">
                   {isFetchingStocks ? (
                     <SkeletonLoader
                       type="text"
@@ -147,10 +147,8 @@ export default function Page() {
                   )}
                   's Stocks
                 </H2>
-                <P className="text-gray-500">
-                  A breakdown of your portfolio holdings
-                </P>
-                <Badge className="text-sm">
+
+                <Badge className="w-fit text-sm">
                   {memorizedStocks?.length} Stocks
                 </Badge>
               </CardHeader>

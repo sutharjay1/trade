@@ -4,8 +4,6 @@ import { geistSans } from "@/lib/font";
 
 export const AppLogo = () => {
   return (
-    <H4 className={cn(geistSans.className, "text-2xl tracking-wider")}>
-      Trade
-    </H4>
+    <H4 className={cn(geistSans.className, "text-2xl  ")}>Assets Bridge</H4>
   );
 };
