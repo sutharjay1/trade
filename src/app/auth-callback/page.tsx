@@ -54,7 +54,7 @@ const AuthCallbackPage = () => {
   if (isError) {
     return (
       <div className="flex h-screen w-full items-center justify-center">
-        <p>Error: {error.message}</p>
+        <Loader2 className="h-10 w-10 animate-spin" />
       </div>
     );
   }

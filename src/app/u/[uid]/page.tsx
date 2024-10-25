@@ -1,26 +1,43 @@
 "use client";
 
-import { useEffect, useMemo, useState } from "react";
 import ConnectKite from "@/components/global/connect-kite";
 import MaxWidthWrapper from "@/components/global/max-width-wrapper";
-import { useUser } from "@/hook/useUser";
-import { trpc } from "@/trpc/client";
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import SkeletonLoader from "@/components/global/skeleton";
-import UserStockCard from "./_components/user-stock-card";
-import { P, H1, H2 } from "@/components/ui/typography";
-import { Badge } from "@/components/ui/badge";
 import MotionWrapper from "@/components/global/motion-wrapper";
+import SkeletonLoader from "@/components/global/skeleton";
+import { Badge } from "@/components/ui/badge";
+import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { Progress } from "@/components/ui/progress";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
+import { H2, P } from "@/components/ui/typography";
 import { useToast } from "@/hook/use-toast";
-import { useRouter } from "next/navigation";
+import { useUser } from "@/hook/useUser";
 import { formatPrice } from "@/lib/utils";
-import { TrendingDown, TrendingUp } from "lucide-react";
+import { trpc } from "@/trpc/client";
+import { Portfolio } from "@prisma/client";
+import {
+  Database,
+  Link2,
+  Table2,
+  TrendingDown,
+  TrendingUp,
+} from "lucide-react";
+import { useEffect, useMemo, useState } from "react";
+import UserStockCard from "./_components/user-stock-card";
 
-export default function Page() {
+const UserPage = ({ params }: { params: { uid: string } }) => {
   const { user } = useUser();
   const { toast } = useToast();
   const [totalInvestedValue, setTotalInvestedValue] = useState<number>(0);
   const [currentPL, setCurrentPL] = useState<number>(0);
+  const [selectedExchange, setSelectedExchange] = useState<string>("all");
+  const [priceFilter, setPriceFilter] = useState("all");
+  const [sortBy, setSortBy] = useState("alphabetical");
 
   const {
     data: isConnected,
@@ -40,27 +57,76 @@ export default function Page() {
   const { data: userStocks, isLoading: isFetchingStocks } =
     trpc.kite.getUserPortfolioStocks.useQuery({ id: user.id.toString() });
 
-  const memorizedStocks = useMemo(() => userStocks, [userStocks]);
+  const filteredStocks = useMemo(() => {
+    if (!userStocks) return [];
+    if (selectedExchange === "all") return userStocks;
+    return userStocks.filter(
+      (stock) =>
+        stock.exchange.toLowerCase() === selectedExchange.toLowerCase(),
+    );
+  }, [userStocks, selectedExchange]);
 
-  const totalInvested = useMemo(() => {
-    if (!memorizedStocks) {
-      return 0;
+  useEffect(() => {
+    if (!filteredStocks) return;
+
+    const totalInvested = filteredStocks.reduce(
+      (acc, stock) => acc + stock.averagePrice * stock.quantity,
+      0,
+    );
+    setTotalInvestedValue(totalInvested);
+
+    const pl = filteredStocks.reduce(
+      (acc, stock) =>
+        acc + (stock.lastPrice - stock.averagePrice) * stock.quantity,
+      0,
+    );
+    setCurrentPL(pl);
+  }, [filteredStocks]);
+
+  const getPriceRange = (price: number) => {
+    if (price < 100) return "low";
+    if (price < 500) return "medium";
+    return "high";
+  };
+
+  const filteredAndSortedStocks = useMemo(() => {
+    if (!userStocks) return [];
+
+    let filtered = [...userStocks];
+
+    if (selectedExchange !== "all") {
+      filtered = filtered.filter(
+        (stock) =>
+          stock.exchange.toLowerCase() === selectedExchange.toLowerCase(),
+      );
     }
 
-    setTotalInvestedValue(
-      memorizedStocks.reduce(
-        (acc, stock) => acc + stock.averagePrice * stock.quantity,
-        0,
-      ),
-    );
-    setCurrentPL(
-      memorizedStocks.reduce(
-        (acc, stock) =>
-          acc + (stock.lastPrice - stock.averagePrice) * stock.quantity,
-        0,
-      ),
-    );
-  }, [memorizedStocks]);
+    if (priceFilter !== "all") {
+      filtered = filtered.filter(
+        (stock) => getPriceRange(stock.lastPrice) === priceFilter,
+      );
+    }
+
+    return filtered.sort((a, b) => {
+      switch (sortBy) {
+        case "price-high":
+          return b.lastPrice - a.lastPrice;
+        case "price-low":
+          return a.lastPrice - b.lastPrice;
+        case "pl-high":
+          const plA = (a.lastPrice - a.averagePrice) * a.quantity;
+          const plB = (b.lastPrice - b.averagePrice) * b.quantity;
+          return plB - plA;
+        case "pl-low":
+          const plC = (a.lastPrice - a.averagePrice) * a.quantity;
+          const plD = (b.lastPrice - b.averagePrice) * b.quantity;
+          return plC - plD;
+        case "alphabetical":
+        default:
+          return a.tradingSymbol.localeCompare(b.tradingSymbol);
+      }
+    });
+  }, [userStocks, selectedExchange, priceFilter, sortBy]);
 
   return (
     <MaxWidthWrapper
@@ -115,13 +181,23 @@ export default function Page() {
                       {formatPrice(totalInvestedValue)}
                     </P>
                     <P>
-                      <strong>Total Gain:</strong>{" "}
+                      <strong>Total Current Value:</strong>{" "}
                       {formatPrice(totalInvestedValue + currentPL)}
                     </P>
                     <P className="flex items-center justify-start gap-2">
                       <strong>Total P&L: </strong>
-                      {formatPrice(currentPL)}
-                      {currentPL >= 0 ? <TrendingUp /> : <TrendingDown />}
+                      <span
+                        className={
+                          currentPL >= 0 ? "text-green-500" : "text-red-500"
+                        }
+                      >
+                        {formatPrice(currentPL)}
+                      </span>
+                      {currentPL >= 0 ? (
+                        <TrendingUp className="text-green-500" />
+                      ) : (
+                        <TrendingDown className="text-red-500" />
+                      )}
                     </P>
                   </div>
                 ) : (
@@ -134,23 +210,74 @@ export default function Page() {
           <MotionWrapper isVisible={true} duration={0.5}>
             <Card className="shadow-lg rounded-lg border">
               <CardHeader className="w-full flex-1 flex justify-between items-start">
-                <H2 className="w-fit border-b-0">
-                  {isFetchingStocks ? (
-                    <SkeletonLoader
-                      type="text"
-                      count={{
-                        text: 1,
-                      }}
-                    />
-                  ) : (
-                    userProfileData?.userName
-                  )}
-                  's Stocks
-                </H2>
+                <CardTitle className="flex flex-col md:flex-row items-center justify-between w-full">
+                  <h2 className="w-full border-b-0 scroll-m-20 pb-2 text-3xl font-semibold tracking-tight first:mt-0">
+                    {isFetchingStocks ? (
+                      <SkeletonLoader
+                        type="text"
+                        count={{
+                          text: 1,
+                        }}
+                      />
+                    ) : (
+                      `${userProfileData?.userName}'s Portfolio`
+                    )}
+                  </h2>
 
-                <Badge className="w-fit text-sm">
-                  {memorizedStocks?.length} Stocks
-                </Badge>
+                  <div className="flex flex-col space-y-4 justify-start sm:space-y-0 sm:flex-row sm:items-center sm:justify-between w-full">
+                    <div className="flex flex-wrap gap-3">
+                      <Select
+                        value={selectedExchange}
+                        onValueChange={setSelectedExchange}
+                      >
+                        <SelectTrigger className="w-[130px] h-9">
+                          <SelectValue placeholder="Exchange" />
+                        </SelectTrigger>
+                        <SelectContent>
+                          <SelectItem value="all">All</SelectItem>
+                          <SelectItem value="nse">NSE</SelectItem>
+                          <SelectItem value="bse">BSE</SelectItem>
+                        </SelectContent>
+                      </Select>
+
+                      <Select value={sortBy} onValueChange={setSortBy}>
+                        <SelectTrigger className="w-[140px] h-9">
+                          <SelectValue placeholder="Sort By" />
+                        </SelectTrigger>
+                        <SelectContent>
+                          <SelectItem value="alphabetical">A-Z</SelectItem>
+                          <SelectItem value="price-high">
+                            Highest Price
+                          </SelectItem>
+                          <SelectItem value="price-low">
+                            Lowest Price
+                          </SelectItem>
+                          <SelectItem value="pl-high">Highest P&L</SelectItem>
+                          <SelectItem value="pl-low">Lowest P&L</SelectItem>
+                        </SelectContent>
+                      </Select>
+
+                      <Select
+                        value={priceFilter}
+                        onValueChange={setPriceFilter}
+                      >
+                        <SelectTrigger className="w-[140px] h-9">
+                          <SelectValue placeholder="Price Range" />
+                        </SelectTrigger>
+                        <SelectContent>
+                          <SelectItem value="all">All Prices</SelectItem>
+                          <SelectItem value="low">&lt; ₹100</SelectItem>
+                          <SelectItem value="medium">₹100 - ₹500</SelectItem>
+                          <SelectItem value="high">&gt; ₹500</SelectItem>
+                        </SelectContent>
+                      </Select>
+                    </div>
+
+                    <Badge className="ml-auto sm:ml-0 h-9 px-4 flex items-center  md:justify-center text-sm font-medium">
+                      {filteredAndSortedStocks.length || 0} Stocks
+                    </Badge>
+                  </div>
+                </CardTitle>
               </CardHeader>
               <CardContent>
                 {isFetchingStocks ? (
@@ -160,20 +287,142 @@ export default function Page() {
                       text: 3,
                     }}
                   />
-                ) : memorizedStocks && userProfileData ? (
+                ) : filteredAndSortedStocks.length > 0 ? (
                   <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
-                    {memorizedStocks.map((stock) => (
+                    {filteredAndSortedStocks.map((stock) => (
                       <UserStockCard key={stock.id} stock={stock} />
                     ))}
                   </div>
                 ) : (
-                  <P>No stock data available.</P>
+                  <P>No stocks found matching the selected filters.</P>
                 )}
               </CardContent>
             </Card>
+          </MotionWrapper>
+
+          <MotionWrapper isVisible={true} duration={0.5}>
+            <SchemaFragmentation
+              userStocks={filteredStocks}
+              userProfileData={userProfileData}
+            />
           </MotionWrapper>
         </div>
       )}
     </MaxWidthWrapper>
   );
-}
+};
+
+const SchemaFragmentation = ({
+  userStocks,
+  userProfileData,
+}: {
+  userStocks: Portfolio[] | any;
+  userProfileData: any;
+}) => {
+  const getModelStats = () => {
+    if (!userStocks || !userProfileData) return null;
+
+    const portfolioSize = userStocks.length;
+    const uniqueExchanges = new Set(
+      userStocks.map((stock: Portfolio) => stock.exchange),
+    ).size;
+    const avgPrice =
+      userStocks.reduce(
+        (acc: number, stock: Portfolio) => acc + stock.lastPrice,
+        0,
+      ) / portfolioSize;
+
+    return {
+      Portfolio: {
+        recordCount: portfolioSize,
+        avgRecordSize: (32 + 16 + 8 + 8 + 8) / 1024,
+        relations: ["UserKite"],
+        usage: Math.min((portfolioSize / 1000) * 100, 100),
+        fields: [
+          "tradingSymbol",
+          "exchange",
+          "lastPrice",
+          "quantity",
+          "averagePrice",
+        ],
+      },
+      UserKite: {
+        recordCount: 1,
+        avgRecordSize: (32 + 256 + 64) / 1024,
+        relations: ["User", "Portfolio"],
+        usage: 45,
+        fields: ["kiteId", "email", "accessToken", "enctoken"],
+      },
+      User: {
+        recordCount: 1,
+        avgRecordSize: (32 + 128 + 128) / 1024,
+        relations: ["UserKite"],
+        usage: 30,
+        fields: ["name", "email", "avatar"],
+      },
+    };
+  };
+
+  const modelStats = getModelStats();
+
+  if (!modelStats) return null;
+
+  return (
+    <Card className="shadow-lg rounded-lg border">
+      <CardHeader>
+        <CardTitle className="flex items-center gap-2">
+          <Database className="w-5 h-5" />
+          <span className="font-medium">Schema Fragmentation Analysis</span>
+        </CardTitle>
+      </CardHeader>
+      <CardContent>
+        <div className="space-y-6">
+          {Object.entries(modelStats).map(([model, stats]) => (
+            <div key={model} className="space-y-2">
+              <div className="flex justify-between items-center">
+                <div className="flex items-center gap-2">
+                  <Table2 className="w-4 h-4" />
+                  <P className="font-medium [&:not(:first-child)]:mt-0">
+                    {model}
+                  </P>
+                </div>
+                <Badge
+                  variant={
+                    stats.usage > 70
+                      ? "destructive"
+                      : stats.usage > 40
+                        ? "warning"
+                        : "success"
+                  }
+                >
+                  {stats.recordCount} Records
+                </Badge>
+              </div>
+              <Progress value={stats.usage} className="h-2" />
+              <div className="grid grid-cols-2 gap-4 text-sm text-muted-foreground">
+                <div>
+                  <span>Avg Record Size: </span>
+                  <span className="font-medium">
+                    {stats.avgRecordSize.toFixed(2)}KB
+                  </span>
+                </div>
+                <div className="flex items-center gap-1">
+                  <Link2 className="w-3 h-3" />
+                  <span className="font-medium">
+                    {stats.relations.join(", ")}
+                  </span>
+                </div>
+              </div>
+              <div className="text-sm text-muted-foreground">
+                <span>Key Fields: </span>
+                <span className="font-medium">{stats.fields.join(", ")}</span>
+              </div>
+            </div>
+          ))}
+        </div>
+      </CardContent>
+    </Card>
+  );
+};
+
+export default UserPage;
