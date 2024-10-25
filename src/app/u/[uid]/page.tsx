@@ -323,42 +323,66 @@ const SchemaFragmentation = ({
     if (!userStocks || !userProfileData) return null;
 
     const portfolioSize = userStocks.length;
-    const uniqueExchanges = new Set(
-      userStocks.map((stock: Portfolio) => stock.exchange),
-    ).size;
-    const avgPrice =
-      userStocks.reduce(
-        (acc: number, stock: Portfolio) => acc + stock.lastPrice,
-        0,
-      ) / portfolioSize;
+
+    const calculateAvgRecordSize = (records: any[], fields: string[]) => {
+      const totalSize = records.reduce((acc, record) => {
+        const recordSize = fields.reduce((size, field) => {
+          const value = record[field];
+          if (typeof value === "string") {
+            return size + value.length * 2;
+          }
+          if (typeof value === "number") {
+            return size + 8;
+          }
+          return size;
+        }, 0);
+        return acc + recordSize;
+      }, 0);
+      return totalSize / records.length / 1024;
+    };
+
+    const portfolioFields = [
+      "tradingSymbol",
+      "exchange",
+      "lastPrice",
+      "quantity",
+      "averagePrice",
+    ];
+
+    const userKiteFields = ["kiteId", "email", "accessToken", "enctoken"];
+    const userFields = ["name", "email", "avatar"];
+
+    const avgPortfolioSize = calculateAvgRecordSize(
+      userStocks,
+      portfolioFields,
+    );
+    const avgUserKiteSize = calculateAvgRecordSize(
+      [userProfileData],
+      userKiteFields,
+    );
+    const avgUserSize = calculateAvgRecordSize([userProfileData], userFields);
 
     return {
       Portfolio: {
         recordCount: portfolioSize,
-        avgRecordSize: (32 + 16 + 8 + 8 + 8) / 1024,
+        avgRecordSize: avgPortfolioSize,
         relations: ["UserKite"],
         usage: Math.min((portfolioSize / 1000) * 100, 100),
-        fields: [
-          "tradingSymbol",
-          "exchange",
-          "lastPrice",
-          "quantity",
-          "averagePrice",
-        ],
+        fields: portfolioFields,
       },
       UserKite: {
         recordCount: 1,
-        avgRecordSize: (32 + 256 + 64) / 1024,
+        avgRecordSize: avgUserKiteSize,
         relations: ["User", "Portfolio"],
         usage: 45,
-        fields: ["kiteId", "email", "accessToken", "enctoken"],
+        fields: userKiteFields,
       },
       User: {
         recordCount: 1,
-        avgRecordSize: (32 + 128 + 128) / 1024,
+        avgRecordSize: avgUserSize,
         relations: ["UserKite"],
         usage: 30,
-        fields: ["name", "email", "avatar"],
+        fields: userFields,
       },
     };
   };
@@ -368,7 +392,7 @@ const SchemaFragmentation = ({
   if (!modelStats) return null;
 
   return (
-    <Card className="shadow-lg rounded-lg border">
+    <Card className="shadow-lg rounded-lg border mb-8">
       <CardHeader>
         <CardTitle className="flex items-center gap-2">
           <Database className="w-5 h-5" />
@@ -403,7 +427,7 @@ const SchemaFragmentation = ({
                 <div>
                   <span>Avg Record Size: </span>
                   <span className="font-medium">
-                    {stats.avgRecordSize.toFixed(2)}KB
+                    {stats.avgRecordSize.toFixed(2)} KB
                   </span>
                 </div>
                 <div className="flex items-center gap-1">
