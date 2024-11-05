@@ -1,36 +1,25 @@
-This is a [Next.js](https://nextjs.org) project bootstrapped with [`create-next-app`](https://nextjs.org/docs/app/api-reference/cli/create-next-app).
+# Trade Kite - Next.js Zerodha App
 
-## Getting Started
+Trade Kite is a feature-rich Next.js application designed to offer seamless integration with Zerodha's Kite API for real-time stock trading. This app empowers users to manage their trading portfolios, view comprehensive market data, and place orders—all within a sleek, modern user interface.
 
-First, run the development server:
+## Key Features
 
-```bash
-npm run dev
-# or
-yarn dev
-# or
-pnpm dev
-# or
-bun dev
-```
+1. **Real-time Market Data:** Fetch live stock prices, historical data, and customizable charts to stay up-to-date with market movements.
+2. **Portfolio Management:** View and manage your stock portfolio with live updates on holdings, profits/losses, and more.
+3. **Order Placement:** Place buy and sell orders for stocks, commodities, and other financial instruments directly from the app.
+4. **Kite API Integration:** Utilize Zerodha's powerful Kite Connect API for secure, fast, and reliable trading capabilities.
+5. **User Authentication:** Secure login with session management for a personalized trading experience tailored to each user.
+6. **Responsive Design:** Optimized for desktop and mobile devices, ensuring a seamless trading experience across all platforms.
 
-Open [http://localhost:3000](http://localhost:3000) with your browser to see the result.
+## Technologies Used
 
-You can start editing the page by modifying `app/page.tsx`. The page auto-updates as you edit the file.
+- **Next.js:** React framework for server-side rendering, API handling, and efficient client-side routing.
+- **Zerodha Kite Connect API:** Provides real-time market data, order management, and trading integration with Zerodha's services.
+- **Tailwind CSS:** Utility-first CSS framework for rapid, responsive, and consistent UI development.
+- **TypeScript:** Statically typed superset of JavaScript, improving code quality and maintainability.
+- **Prisma ORM:** Object-Relational Mapping (ORM) tool for easy database interactions, user management, and transaction records.
+- **React Components:** Leveraging React's component-based architecture for modular, reusable UI elements.
+- **Recharts:** Powerful data visualization library for creating custom, interactive stock charts and graphs.
+- **Lucide React:** Collection of customizable React icons for enhancing the user interface.
 
-This project uses [`next/font`](https://nextjs.org/docs/app/building-your-application/optimizing/fonts) to automatically optimize and load [Geist](https://vercel.com/font), a new font family for Vercel.
-
-## Learn More
-
-To learn more about Next.js, take a look at the following resources:
-
-- [Next.js Documentation](https://nextjs.org/docs) - learn about Next.js features and API.
-- [Learn Next.js](https://nextjs.org/learn) - an interactive Next.js tutorial.
-
-You can check out [the Next.js GitHub repository](https://github.com/vercel/next.js) - your feedback and contributions are welcome!
-
-## Deploy on Vercel
-
-The easiest way to deploy your Next.js app is to use the [Vercel Platform](https://vercel.com/new?utm_medium=default-template&filter=next.js&utm_source=create-next-app&utm_campaign=create-next-app-readme) from the creators of Next.js.
-
-Check out our [Next.js deployment documentation](https://nextjs.org/docs/app/building-your-application/deploying) for more details.
+For detailed instructions on configuration, API integration, and deployment, please refer to the project's [README](https://github.com/sutharjay1/trade/blob/main/README.md).
