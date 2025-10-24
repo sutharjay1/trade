@@ -1,7 +1,6 @@
 "use client";
 
 import React, { useState, useEffect } from "react";
-import MaxWidthWrapper from "@/components/global/max-width-wrapper";
 import ConnectKite from "@/components/global/connect-kite";
 import { useRouter, useSearchParams } from "next/navigation";
 import { useKiteRequest } from "@/hook/use-kite-request";
@@ -87,7 +86,7 @@ export default function Kite() {
   }, [user, requestTokenFromParam, setRequestToken, generateSession]);
 
   return (
-    <MaxWidthWrapper padding="large" paddingTop="large" maxw="max-w-8xl">
+    <div className="w-full h-full">
       <ConnectKite />
       {(isGeneratingSession || isUpdatingProfile) && (
         <div className="flex flex-col items-center justify-center mt-8">
@@ -100,6 +99,6 @@ export default function Kite() {
         </div>
       )}
       <Toaster />
-    </MaxWidthWrapper>
+    </div>
   );
 }

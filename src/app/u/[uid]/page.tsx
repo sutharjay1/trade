@@ -1,7 +1,6 @@
 "use client";
 
 import ConnectKite from "@/components/global/connect-kite";
-import MaxWidthWrapper from "@/components/global/max-width-wrapper";
 import MotionWrapper from "@/components/global/motion-wrapper";
 import SkeletonLoader from "@/components/global/skeleton";
 import { Badge } from "@/components/ui/badge";
@@ -129,12 +128,7 @@ const UserPage = ({ params }: { params: { uid: string } }) => {
   }, [userStocks, selectedExchange, priceFilter, sortBy]);
 
   return (
-    <MaxWidthWrapper
-      padding="large"
-      paddingTop="small"
-      maxw="max-w-8xl"
-      className="px-4"
-    >
+    <div className="w-full h-full">
       <ConnectKite />
 
       {isConnected && (
@@ -308,7 +302,7 @@ const UserPage = ({ params }: { params: { uid: string } }) => {
           </MotionWrapper>
         </div>
       )}
-    </MaxWidthWrapper>
+    </div>
   );
 };
 

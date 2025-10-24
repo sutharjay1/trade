@@ -39,8 +39,10 @@ export default async function RootLayout({
               <ClientProvider session={session}>
                 <Toaster />
 
+                <div className="space-y-6">
                 <Header />
                 {children}
+                </div>
               </ClientProvider>
             </ThemeProvider>
           </TooltipProvider>

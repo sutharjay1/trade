@@ -37,7 +37,7 @@ const Banner = () => {
   }, []); // Correctly placed dependencies
 
   return (
-    <MotionWrapper isVisible={true} duration={0.99} className="pt-24">
+    <MotionWrapper isVisible={true} duration={0.99}>
       <div className="tradingview-widget-container" ref={tickerTapeRef}></div>
     </MotionWrapper>
   );

@@ -6,6 +6,7 @@ import { DematConsentType } from "@prisma/client";
 import { TRPCError } from "@trpc/server";
 import { privateProcedure, router } from "../../trpc";
 import { KITE_API_KEY, KITE_API_KEY_SECRET } from "@/kite";
+import { validateTag } from "@/lib/trading-utils";
 
 export function generateChecksum({
   apiKey,
@@ -421,5 +422,398 @@ export const kiteRouter = router({
       }
 
       return true;
+    }),
+
+  // Order Management Routes
+  placeOrder: privateProcedure
+    .input(
+      z.object({
+        userId: z.string(),
+        tradingsymbol: z.string(),
+        exchange: z.string(),
+        transaction_type: z.enum(["BUY", "SELL"]),
+        order_type: z.enum(["MARKET", "LIMIT", "SL", "SL-M"]),
+        quantity: z.number().positive(),
+        product: z.enum(["CNC", "NRML", "MIS", "MTF"]),
+        price: z.number().optional(),
+        trigger_price: z.number().optional(),
+        validity: z.enum(["DAY", "IOC", "TTL"]).default("DAY"),
+        validity_ttl: z.number().optional(),
+        disclosed_quantity: z.number().optional(),
+        tag: z.string().max(20, "Tag must be 20 characters or less").optional(),
+        market_protection: z.number().min(-1).max(100).default(0),
+        autoslice: z.boolean().default(false),
+      }),
+    )
+    .mutation(async ({ ctx, input }) => {
+      const { session } = ctx;
+
+      try {
+        const userKite = await db.userKite.findFirst({
+          where: {
+            userId: input.userId,
+          },
+        });
+
+        if (!userKite) {
+          throw new TRPCError({
+            code: "NOT_FOUND",
+            message: "User Kite account not found",
+          });
+        }
+
+        // Ensure tag length is within Kite API limits (max 20 characters)
+        const tag = input.tag ? validateTag(input.tag) : undefined;
+
+        const orderPayload = {
+          tradingsymbol: input.tradingsymbol,
+          exchange: input.exchange,
+          transaction_type: input.transaction_type,
+          order_type: input.order_type,
+          quantity: input.quantity,
+          product: input.product,
+          validity: input.validity,
+          ...(input.price && { price: input.price }),
+          ...(input.trigger_price && { trigger_price: input.trigger_price }),
+          ...(input.validity_ttl && { validity_ttl: input.validity_ttl }),
+          ...(input.disclosed_quantity && { disclosed_quantity: input.disclosed_quantity }),
+          ...(tag && { tag }),
+          market_protection: input.market_protection,
+          autoslice: input.autoslice,
+        };
+
+        const response = await fetch("https://api.kite.trade/orders/regular", {
+          method: "POST",
+          headers: {
+            "X-Kite-Version": "3",
+            Authorization: `token ${KITE_API_KEY}:${userKite.accessToken}`,
+            "Content-Type": "application/x-www-form-urlencoded",
+          },
+          body: new URLSearchParams(orderPayload as any),
+        });
+
+        if (!response.ok) {
+          const errorData = await response.json();
+          throw new TRPCError({
+            code: "BAD_REQUEST",
+            message: errorData.message || "Failed to place order",
+          });
+        }
+
+        const data = await response.json();
+
+        return {
+          success: true,
+          order_id: data.data.order_id,
+          message: "Order placed successfully",
+        };
+      } catch (error: any) {
+        console.error("Error placing order:", error);
+        throw new TRPCError({
+          code: "INTERNAL_SERVER_ERROR",
+          message: error.message || "Failed to place order",
+        });
+      }
+    }),
+
+  modifyOrder: privateProcedure
+    .input(
+      z.object({
+        userId: z.string(),
+        order_id: z.string(),
+        order_type: z.enum(["MARKET", "LIMIT", "SL", "SL-M"]).optional(),
+        quantity: z.number().positive().optional(),
+        price: z.number().optional(),
+        trigger_price: z.number().optional(),
+        disclosed_quantity: z.number().optional(),
+        validity: z.enum(["DAY", "IOC", "TTL"]).optional(),
+      }),
+    )
+    .mutation(async ({ ctx, input }) => {
+      const { session } = ctx;
+
+      try {
+        const userKite = await db.userKite.findFirst({
+          where: {
+            userId: input.userId,
+          },
+        });
+
+        if (!userKite) {
+          throw new TRPCError({
+            code: "NOT_FOUND",
+            message: "User Kite account not found",
+          });
+        }
+
+        const modifyPayload = {
+          ...(input.order_type && { order_type: input.order_type }),
+          ...(input.quantity && { quantity: input.quantity }),
+          ...(input.price && { price: input.price }),
+          ...(input.trigger_price && { trigger_price: input.trigger_price }),
+          ...(input.disclosed_quantity && { disclosed_quantity: input.disclosed_quantity }),
+          ...(input.validity && { validity: input.validity }),
+        };
+
+        const response = await fetch(
+          `https://api.kite.trade/orders/regular/${input.order_id}`,
+          {
+            method: "PUT",
+            headers: {
+              "X-Kite-Version": "3",
+              Authorization: `token ${KITE_API_KEY}:${userKite.accessToken}`,
+              "Content-Type": "application/x-www-form-urlencoded",
+            },
+            body: new URLSearchParams(modifyPayload as any),
+          },
+        );
+
+        if (!response.ok) {
+          const errorData = await response.json();
+          throw new TRPCError({
+            code: "BAD_REQUEST",
+            message: errorData.message || "Failed to modify order",
+          });
+        }
+
+        const data = await response.json();
+
+        return {
+          success: true,
+          order_id: data.data.order_id,
+          message: "Order modified successfully",
+        };
+      } catch (error: any) {
+        console.error("Error modifying order:", error);
+        throw new TRPCError({
+          code: "INTERNAL_SERVER_ERROR",
+          message: error.message || "Failed to modify order",
+        });
+      }
+    }),
+
+  cancelOrder: privateProcedure
+    .input(
+      z.object({
+        userId: z.string(),
+        order_id: z.string(),
+      }),
+    )
+    .mutation(async ({ ctx, input }) => {
+      const { session } = ctx;
+
+      try {
+        const userKite = await db.userKite.findFirst({
+          where: {
+            userId: input.userId,
+          },
+        });
+
+        if (!userKite) {
+          throw new TRPCError({
+            code: "NOT_FOUND",
+            message: "User Kite account not found",
+          });
+        }
+
+        const response = await fetch(
+          `https://api.kite.trade/orders/regular/${input.order_id}`,
+          {
+            method: "DELETE",
+            headers: {
+              "X-Kite-Version": "3",
+              Authorization: `token ${KITE_API_KEY}:${userKite.accessToken}`,
+            },
+          },
+        );
+
+        if (!response.ok) {
+          const errorData = await response.json();
+          throw new TRPCError({
+            code: "BAD_REQUEST",
+            message: errorData.message || "Failed to cancel order",
+          });
+        }
+
+        const data = await response.json();
+
+        return {
+          success: true,
+          order_id: data.data.order_id,
+          message: "Order cancelled successfully",
+        };
+      } catch (error: any) {
+        console.error("Error cancelling order:", error);
+        throw new TRPCError({
+          code: "INTERNAL_SERVER_ERROR",
+          message: error.message || "Failed to cancel order",
+        });
+      }
+    }),
+
+  getOrders: privateProcedure
+    .input(
+      z.object({
+        userId: z.string(),
+      }),
+    )
+    .query(async ({ ctx, input }) => {
+      const { session } = ctx;
+
+      try {
+        const userKite = await db.userKite.findFirst({
+          where: {
+            userId: input.userId,
+          },
+        });
+
+        if (!userKite) {
+          throw new TRPCError({
+            code: "NOT_FOUND",
+            message: "User Kite account not found",
+          });
+        }
+
+        const response = await fetch("https://api.kite.trade/orders", {
+          method: "GET",
+          headers: {
+            "X-Kite-Version": "3",
+            Authorization: `token ${KITE_API_KEY}:${userKite.accessToken}`,
+          },
+        });
+
+        if (!response.ok) {
+          const errorData = await response.json();
+          throw new TRPCError({
+            code: "BAD_REQUEST",
+            message: errorData.message || "Failed to fetch orders",
+          });
+        }
+
+        const data = await response.json();
+
+        return {
+          success: true,
+          orders: data.data,
+        };
+      } catch (error: any) {
+        console.error("Error fetching orders:", error);
+        throw new TRPCError({
+          code: "INTERNAL_SERVER_ERROR",
+          message: error.message || "Failed to fetch orders",
+        });
+      }
+    }),
+
+  getOrderHistory: privateProcedure
+    .input(
+      z.object({
+        userId: z.string(),
+        order_id: z.string(),
+      }),
+    )
+    .query(async ({ ctx, input }) => {
+      const { session } = ctx;
+
+      try {
+        const userKite = await db.userKite.findFirst({
+          where: {
+            userId: input.userId,
+          },
+        });
+
+        if (!userKite) {
+          throw new TRPCError({
+            code: "NOT_FOUND",
+            message: "User Kite account not found",
+          });
+        }
+
+        const response = await fetch(
+          `https://api.kite.trade/orders/${input.order_id}`,
+          {
+            method: "GET",
+            headers: {
+              "X-Kite-Version": "3",
+              Authorization: `token ${KITE_API_KEY}:${userKite.accessToken}`,
+            },
+          },
+        );
+
+        if (!response.ok) {
+          const errorData = await response.json();
+          throw new TRPCError({
+            code: "BAD_REQUEST",
+            message: errorData.message || "Failed to fetch order history",
+          });
+        }
+
+        const data = await response.json();
+
+        return {
+          success: true,
+          orderHistory: data.data,
+        };
+      } catch (error: any) {
+        console.error("Error fetching order history:", error);
+        throw new TRPCError({
+          code: "INTERNAL_SERVER_ERROR",
+          message: error.message || "Failed to fetch order history",
+        });
+      }
+    }),
+
+  getTrades: privateProcedure
+    .input(
+      z.object({
+        userId: z.string(),
+      }),
+    )
+    .query(async ({ ctx, input }) => {
+      const { session } = ctx;
+
+      try {
+        const userKite = await db.userKite.findFirst({
+          where: {
+            userId: input.userId,
+          },
+        });
+
+        if (!userKite) {
+          throw new TRPCError({
+            code: "NOT_FOUND",
+            message: "User Kite account not found",
+          });
+        }
+
+        const response = await fetch("https://api.kite.trade/trades", {
+          method: "GET",
+          headers: {
+            "X-Kite-Version": "3",
+            Authorization: `token ${KITE_API_KEY}:${userKite.accessToken}`,
+          },
+        });
+
+        if (!response.ok) {
+          const errorData = await response.json();
+          throw new TRPCError({
+            code: "BAD_REQUEST",
+            message: errorData.message || "Failed to fetch trades",
+          });
+        }
+
+        const data = await response.json();
+
+        return {
+          success: true,
+          trades: data.data,
+        };
+      } catch (error: any) {
+        console.error("Error fetching trades:", error);
+        throw new TRPCError({
+          code: "INTERNAL_SERVER_ERROR",
+          message: error.message || "Failed to fetch trades",
+        });
+      }
     }),
 });

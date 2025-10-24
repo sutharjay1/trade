@@ -1,10 +1,9 @@
 "use client";
 
 import { Button } from "@/components/ui/button";
-import React from "react";
+import React, { useEffect, useState } from "react";
 import { cn } from "@/lib/utils";
 import Link from "next/link";
-import { useEffect, useState } from "react";
 import { HiMiniArrowLongRight } from "react-icons/hi2";
 
 import {
@@ -19,16 +18,15 @@ import { signOut, useSession } from "next-auth/react";
 import { usePathname, useRouter } from "next/navigation";
 import { BiChevronDown } from "react-icons/bi";
 import { AppLogo } from "./app-logo";
-import MaxWidthWrapper from "./max-width-wrapper";
 
-import UserAvatar from "../user-avatar";
+import UserAvatar from "../account-dropdown";
 import {
-  Sheet,
-  SheetContent,
-  SheetHeader,
-  SheetTitle,
-  SheetTrigger,
-} from "../ui/sheet";
+  Drawer,
+  DrawerContent,
+  DrawerHeader,
+  DrawerTitle,
+  DrawerTrigger,
+} from "../ui/drawer";
 
 import ToggleTheme from "./toggle-theme";
 import { useUser } from "@/hook/useUser";
@@ -48,32 +46,12 @@ const NAV_LINKS: NavLinkProps[] = [
 ];
 
 const Header = () => {
-  const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
-  const [currentHash, setCurrentHash] = useState<string>("");
-
+  const [isOpen, setIsOpen] = useState(false);
+  const [expandedMenu, setExpandedMenu] = useState<string | null>(null);
   const { user } = useUser();
-
-  const handleNavLinkClick = (link: NavLinkProps) => {
-    setCurrentHash(link.href.split("#")[1]);
-    setMobileMenuOpen(false);
-
-    if (link.submenu) {
-      setExpandedMenu(expandedMenu === link.title ? null : (link.title as any));
-    } else {
-      setIsOpen(false);
-      setExpandedMenu(null);
-    }
-  };
-
   const pathname = usePathname();
   const router = useRouter();
-
   const session = useSession();
-
-  //   const { setUser } = useUser();
-
-  const [isOpen, setIsOpen] = useState(false);
-  const [expandedMenu, setExpandedMenu] = useState(null);
 
   useEffect(() => {
     setIsOpen(false);
@@ -82,371 +60,186 @@ const Header = () => {
 
   const handleMenuClick = (link: NavLinkProps) => {
     if (link.submenu) {
-      setExpandedMenu(expandedMenu === link.title ? null : (link.title as any));
+      setExpandedMenu(expandedMenu === link.title ? null : link.title);
     } else {
       setIsOpen(false);
       setExpandedMenu(null);
     }
   };
 
-  //   const queryInput: any = useMemo(
-  //     () => ({
-  //       name: session?.data?.user?.name as string,
-  //       email: session?.data?.user?.email as string,
-  //       avatar: session?.data?.user?.image as string,
-  //     }),
-  //     [
-  //       session?.data?.user?.email,
-  //       session?.data?.user?.image,
-  //       session?.data?.user?.name,
-  //     ]
-  //   );
-
-  //   const { mutate: getUser, isLoading: isUserLoading } =
-  //     trpc.getUser.useMutation();
-
-  //   useEffect(() => {
-  //     if (session?.data?.user) {
-  //       getUser(queryInput);
-  //     }
-  //   }, [session.data?.user]);
-
-  //   useEffect(() => {
-  //     if (userData) {
-  //       setUser(userData);
-  //     }
-  //   }, [userData, setUser]);
-
-  // useEffect(() => {
-  //   if (session?.status === "authenticated" && !userData) {
-  //     setUser({
-  //       name: "",
-  //       email: "",
-  //       avatar: "",
-  //       createdAt: "",
-  //       updatedAt: "",
-  //       id: 0,
-  //     });
-  //   }
-  // }, [session?.status, userData, setUser]);
-
-  //   const session = {
-  //     data: false,
-  //   };
-
   const handleLogin = async () => {
     router.push("/login");
-    // signIn("google", {
-    //   callbackUrl: "/u",
-    //   redirect: true,
-    // });
   };
 
   return (
     <header
       className={cn(
-        "fixed left-0 right-0 top-0 z-10 py-1 flex  items-center justify-between border-b-[1px] border-neutral-900/20 bg-background px-8   backdrop-blur-sm ",
+        "max-w-7xl mx-auto w-full border-b border-border/40 bg-background/95 backdrop-blur supports-[backdrop-filter]:bg-background/60",
         geistSans.className,
       )}
     >
-      <Sheet open={isOpen} onOpenChange={setIsOpen}>
-        {session.data === null ? (
-          <MaxWidthWrapper
-            className="w-full px-1"
-            padding="small"
-            maxw="max-w-6xl"
-          >
-            <div className="relative   flex items-center justify-between  ">
-              <Link
-                href={user ? `/u/${user?.id}` : "/"}
-                aria-label="home"
-                className="mr-4 flex items-center justify-center"
-              >
-                <AppLogo />
-              </Link>
+      <div className="container flex h-16 max-w-screen-2xl items-center justify-between px-4 md:px-0">
+        <Drawer open={isOpen} onOpenChange={setIsOpen}>
+          {/* Logo */}
+          <Link href={session.data ? "/" : (user ? `/u/${user?.id}` : "/")} aria-label="home">
+            <AppLogo />
+          </Link>
 
-              {pathname.includes("/") && (
-                <nav
-                  role="navigation"
-                  className={cn(
-                    "w-nav-menu static ml-4 hidden lg:flex",
-                    user && "hidden",
-                  )}
-                >
-                  <NavigationMenu className="hidden lg:flex">
-                    <NavigationMenuList>
-                      {NAV_LINKS.map((link) => {
-                        return (
-                          <NavigationMenuItem key={link.href}>
-                            <Link
-                              href={link.href}
-                              passHref
-                              scroll={true}
-                              onClick={() => handleNavLinkClick(link)}
-                              className={cn(
-                                navigationMenuTriggerStyle(),
-                                "text-base",
-                              )}
-                            >
-                              <span className="tracking-normal">
-                                {link.title}
-                              </span>
-                              {link.submenu && (
-                                <BiChevronDown className="ml-1" />
-                              )}
-                            </Link>
-                            {link.submenu && expandedMenu === link.title && (
-                              <div className="invisible absolute right-24 mt-2 w-48 rounded-lg p-2 opacity-0 shadow-lg ring-1 ring-black ring-opacity-5 transition-all duration-200 ease-in-out group-hover:visible group-hover:opacity-100">
-                                <div
-                                  className="py-1"
-                                  role="menu"
-                                  aria-orientation="vertical"
-                                  aria-labelledby="options-menu"
-                                >
-                                  {link.submenu.map((subItem) => (
-                                    <Link
-                                      key={subItem.path}
-                                      href={subItem.path}
-                                      className="block rounded-lg px-4 py-3 text-sm text-gray-600 hover:bg-zinc-200 hover:text-zinc-800"
-                                      role="menuitem"
-                                    >
-                                      {subItem.title}
-                                    </Link>
-                                  ))}
-                                </div>
-                              </div>
-                            )}
-                          </NavigationMenuItem>
-                        );
-                      })}
-                    </NavigationMenuList>
-                  </NavigationMenu>
-                </nav>
-              )}
-
-              <nav className="mb-2 flex items-center justify-center gap-x-6 px-1 pt-2">
-                <ToggleTheme className="p-3" />
-                {/* <Cart /> */}
-                {/* <Button
-                  className="group hidden w-full items-center justify-center gap-1.5 rounded-lg border border-green-900 bg-gradient-to-br from-green-900 to-blue-900 px-6 py-5 dark:border-green-900 dark:from-green-950 dark:to-blue-950 lg:flex"
-                  onClick={handleLogin}
-                >
-                  <span className="text-zinc-200 dark:text-zinc-300">
-                    Sign in
-                  </span>
-                  <HiMiniArrowLongRight className="h-5 w-5 text-zinc-200 transition-all group-hover:translate-x-1 dark:text-zinc-300" />
-                </Button> */}
-
-                <Button
-                  variant="default"
-                  className="group hidden w-full items-center justify-center gap-1.5 rounded-lg px-6 lg:flex"
-                  onClick={handleLogin}
-                  asChild
-                >
-                  <Link href="/login">Sign in</Link>
-                </Button>
-
-                <SheetTrigger asChild className="lg:hidden">
-                  {/* <Button
-                    variant="ghost"
-                    size="icon"
-                    className="relative float-right flex cursor-pointer select-none p-2 text-2xl [-ms-user-select:none] [-webkit-tap-highlight-color:rgba(0,0,0,0)] [-webkit-user-select:none] [tap-highlight-color:rgba(0,0,0,0)] lg:hidden"
-                    onClick={() => setMobileMenuOpen(!mobileMenuOpen)}
-                    aria-label="menu"
-                  >
-                    <Menu className="h-6 w-6" />
-                    </Button> */}
-
-                  <Button
-                    variant="ghost"
-                    className="group  w-full items-center justify-center gap-1.5 rounded-lg px-6  relative float-right flex cursor-pointer select-none p-2 text-2xl [-ms-user-select:none] [-webkit-tap-highlight-color:rgba(0,0,0,0)] [-webkit-user-select:none] [tap-highlight-color:rgba(0,0,0,0)] lg:hidden "
-                    onClick={() => setMobileMenuOpen(!mobileMenuOpen)}
-                    aria-label="menu"
-                  >
-                    <Menu className="h-6 w-6" />
-                  </Button>
-                </SheetTrigger>
-              </nav>
-            </div>
-          </MaxWidthWrapper>
-        ) : (
-          <MaxWidthWrapper className="px-2">
-            <div className="relative   flex items-center py-2  justify-between  ">
-              <Link href={"/"} aria-label="home" className="mr-4">
-                <AppLogo />
-              </Link>
-
-              <nav
-                role="navigation"
-                className="w-nav-menu static ml-4 hidden lg:flex"
-              >
-                <NavigationMenu className="hidden lg:flex">
-                  <NavigationMenuList>
-                    {NAV_LINKS.map((link) => {
-                      return (
-                        <NavigationMenuItem key={link.href}>
+          {/* Desktop Navigation */}
+          <nav className="hidden lg:flex items-center space-x-6">
+            <NavigationMenu>
+              <NavigationMenuList>
+                {NAV_LINKS.map((link) => (
+                  <NavigationMenuItem key={link.href}>
+                    <Link
+                      href={link.href}
+                      className={cn(
+                        navigationMenuTriggerStyle(),
+                        "text-sm font-medium transition-colors hover:text-primary"
+                      )}
+                    >
+                      {link.title}
+                      {link.submenu && <BiChevronDown className="ml-1 h-4 w-4" />}
+                    </Link>
+                    {link.submenu && expandedMenu === link.title && (
+                      <div className="absolute top-full left-0 mt-2 w-48 rounded-md border bg-popover p-1 shadow-md">
+                        {link.submenu.map((subItem) => (
                           <Link
-                            href={link.href}
-                            passHref
-                            scroll={true}
-                            onClick={() => handleNavLinkClick(link)}
-                            className={cn(
-                              navigationMenuTriggerStyle(),
-                              "text-base",
-                            )}
+                            key={subItem.path}
+                            href={subItem.path}
+                            className="block rounded-sm px-3 py-2 text-sm hover:bg-accent hover:text-accent-foreground"
                           >
-                            {link.title}
-                            {link.submenu && <BiChevronDown className="ml-1" />}
+                            {subItem.title}
                           </Link>
-                          {link.submenu && expandedMenu === link.title && (
-                            <div className="invisible absolute right-24 mt-2 w-48 rounded-lg bg-zinc-300 p-2 opacity-0 shadow-lg ring-1 ring-black ring-opacity-5 transition-all duration-200 ease-in-out group-hover:visible group-hover:opacity-100">
-                              <div
-                                className="py-1"
-                                role="menu"
-                                aria-orientation="vertical"
-                                aria-labelledby="options-menu"
-                              >
-                                {link.submenu.map((subItem) => (
-                                  <Link
-                                    key={subItem.path}
-                                    href={subItem.path}
-                                    className="block rounded-lg px-4 py-3 text-sm text-gray-600 hover:bg-zinc-200 hover:text-zinc-800"
-                                    role="menuitem"
-                                  >
-                                    {subItem.title}
-                                  </Link>
-                                ))}
-                              </div>
-                            </div>
-                          )}
-                        </NavigationMenuItem>
-                      );
-                    })}
-                  </NavigationMenuList>
-                </NavigationMenu>
-              </nav>
-
-              <nav className="flex items-center justify-end gap-x-3 md:gap-x-6">
-                <ToggleTheme />
-                {/* <Cart /> */}
-                <UserAvatar />
-
-                <SheetTrigger asChild className="lg:hidden">
-                  <Button
-                    variant="ghost"
-                    size="icon"
-                    className="relative float-right flex cursor-pointer select-none p-2 text-2xl [-ms-user-select:none] [-webkit-tap-highlight-color:rgba(0,0,0,0)] [-webkit-user-select:none] [tap-highlight-color:rgba(0,0,0,0)] lg:hidden"
-                    onClick={() => setMobileMenuOpen(!mobileMenuOpen)}
-                    aria-label="menu"
-                  >
-                    {mobileMenuOpen ? (
-                      <X className="h-6 w-6" />
-                    ) : (
-                      <Menu className="h-6 w-6" />
+                        ))}
+                      </div>
                     )}
-                  </Button>
-                </SheetTrigger>
-              </nav>
-            </div>
-          </MaxWidthWrapper>
-        )}
+                  </NavigationMenuItem>
+                ))}
+              </NavigationMenuList>
+            </NavigationMenu>
+          </nav>
 
-        <SheetContent side="left" className="h-full w-full p-3 pt-8">
-          <SheetHeader>
-            <SheetTitle>
-              {" "}
-              <Link href={"/"} onClick={() => setIsOpen(false)}>
-                <AppLogo />
-              </Link>
-            </SheetTitle>
-          </SheetHeader>
+          {/* Right side actions */}
+          <div className="flex items-center space-x-2">
+            <ToggleTheme />
+            
+            {session.data ? (
+              <UserAvatar />
+            ) : (
+              <Button
+                variant="default"
+                size="sm"
+                onClick={handleLogin}
+                className="hidden lg:flex"
+              >
+                Sign in
+              </Button>
+            )}
 
-          <div
-            className="fixed inset-0 top-16 z-50 mt-2 flex w-full flex-col items-center justify-start bg-opacity-95 md:top-20 lg:hidden  "
-            onClick={() => setMobileMenuOpen(false)}
-          >
-            <div className={cn("flex w-full flex-col gap-8 px-3 py-5")}>
-              <NavigationMenu className="grid w-full place-items-start">
-                <NavigationMenuList className="mt-6 grid flex-1 gap-y-4 pt-4">
-                  {NAV_LINKS.map((link) => (
-                    <NavigationMenuItem
-                      key={link.href}
-                      className="flex w-full flex-col items-start"
+            {/* Mobile menu trigger */}
+            <DrawerTrigger asChild>
+              <Button
+                variant="ghost"
+                size="icon"
+                className="lg:hidden"
+                aria-label="Open menu"
+              >
+                <Menu className="h-5 w-5" />
+              </Button>
+            </DrawerTrigger>
+          </div>
+
+          <DrawerContent className="w-full ">
+            <DrawerHeader className="pb-4">
+              <DrawerTitle>
+                <Link href="/" onClick={() => setIsOpen(false)}>
+                  <AppLogo />
+                </Link>
+              </DrawerTitle>
+            </DrawerHeader>
+
+            <div className="px-4 pb-4">
+              {/* Navigation Links */}
+              <nav className="space-y-2">
+                {NAV_LINKS.map((link) => (
+                  <div key={link.href} className="space-y-1">
+                    <Link
+                      href={link.href}
+                      className="flex items-center justify-between rounded-md px-3 py-2 text-sm font-medium hover:bg-accent"
                       onClick={() => handleMenuClick(link)}
                     >
-                      <Link
-                        href={link.href}
-                        className="underline-indigo-600 w-full underline-offset-[5px] hover:underline"
-                        passHref
-                      >
-                        <span className="ml-3 flex items-center text-base font-normal">
-                          {link.title}
-                          {link.submenu ? (
-                            <BiChevronDown
-                              className={`h-4 w-4 transition-transform ${
-                                expandedMenu === link.title ? "rotate-180" : ""
-                              } ml-2`}
-                            />
-                          ) : null}
-                        </span>
-                      </Link>
-                      {link.submenu && expandedMenu === link.title && (
-                        <div className="ml-6 mt-2 w-full space-y-2">
-                          {link.submenu.map((subItem) => (
-                            <Link
-                              key={subItem.path}
-                              href={subItem.path}
-                              onClick={() => setMobileMenuOpen(false)}
-                              className="block w-full rounded-md p-2 text-sm text-gray-600 hover:bg-zinc-200 hover:text-[#ff6400]"
-                            >
-                              {subItem.title}
-                            </Link>
-                          ))}
-                        </div>
+                      <span>{link.title}</span>
+                      {link.submenu && (
+                        <BiChevronDown
+                          className={`h-4 w-4 transition-transform ${
+                            expandedMenu === link.title ? "rotate-180" : ""
+                          }`}
+                        />
                       )}
-                    </NavigationMenuItem>
-                  ))}
-                </NavigationMenuList>
-              </NavigationMenu>
+                    </Link>
+                    {link.submenu && expandedMenu === link.title && (
+                      <div className="ml-4 space-y-1">
+                        {link.submenu.map((subItem) => (
+                          <Link
+                            key={subItem.path}
+                            href={subItem.path}
+                            onClick={() => setIsOpen(false)}
+                            className="block rounded-md px-3 py-2 text-sm text-muted-foreground hover:bg-accent hover:text-accent-foreground"
+                          >
+                            {subItem.title}
+                          </Link>
+                        ))}
+                      </div>
+                    )}
+                  </div>
+                ))}
+              </nav>
 
-              {session.status === "authenticated" ? (
-                <>
-                  <Button
-                    className="group flex h-10 w-full items-center justify-center gap-1.5 rounded-lg border  sm:h-8 sm:w-36"
-                    onClick={() => router.push(`/u/${user?.id.toString()}`)}
-                  >
-                    <span className="text-zinc-300 dark:text-zinc-900">
+              {/* Action Buttons */}
+              <div className="mt-6 space-y-2">
+                {session.data ? (
+                  <>
+                    <Button
+                      variant="outline"
+                      className="w-full justify-start"
+                      onClick={() => {
+                        router.push(`/u/${user?.id.toString()}`);
+                        setIsOpen(false);
+                      }}
+                    >
+                      <User className="mr-2 h-4 w-4" />
                       Profile
-                    </span>
-                    <User className="mr-2 h-4 w-4" />
-                  </Button>
-
-                  <Button
-                    className="group flex h-10 w-full items-center justify-center gap-1.5 rounded-lg border  sm:h-8 sm:w-36"
-                    onClick={() => signOut({ callbackUrl: "/" })}
-                  >
-                    <span className="text-zinc-300 dark:text-zinc-900">
+                    </Button>
+                    <Button
+                      variant="outline"
+                      className="w-full justify-start"
+                      onClick={() => {
+                        signOut({ callbackUrl: "/" });
+                        setIsOpen(false);
+                      }}
+                    >
+                      <HiMiniArrowLongRight className="mr-2 h-4 w-4" />
                       Log out
-                    </span>
-                    <HiMiniArrowLongRight className="h-5 w-5 text-zinc-200 transition-all group-hover:translate-x-1 dark:text-zinc-300" />
-                  </Button>
-                </>
-              ) : (
-                <Button
-                  className="group flex h-10 w-full items-center justify-center gap-1.5 rounded-lg border  sm:h-8 sm:w-36"
-                  onClick={handleLogin}
-                >
-                  <span className="text-zinc-300 dark:text-zinc-900">
+                    </Button>
+                  </>
+                ) : (
+                  <Button
+                    className="w-full"
+                    onClick={() => {
+                      handleLogin();
+                      setIsOpen(false);
+                    }}
+                  >
+                    <HiMiniArrowLongRight className="mr-2 h-4 w-4" />
                     Sign in
-                  </span>
-                  <HiMiniArrowLongRight className="h-5 w-5 text-zinc-200 transition-all group-hover:translate-x-1 dark:text-zinc-300" />
-                </Button>
-              )}
+                  </Button>
+                )}
+              </div>
             </div>
-          </div>
-          {/* )} */}
-        </SheetContent>
-      </Sheet>
+          </DrawerContent>
+        </Drawer>
+      </div>
     </header>
   );
 };

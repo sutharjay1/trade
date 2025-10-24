@@ -1,16 +1,24 @@
 "use client";
 
 import { useTheme } from "next-themes";
-import React, { useEffect, useRef } from "react";
+import React, { useEffect, useRef, useMemo, memo } from "react";
 
 type Props = {
   exchange: string;
   tradingSymbol: string;
 };
 
-const ChartSymbol: React.FC<Props> = ({ exchange, tradingSymbol }) => {
+const ChartSymbol: React.FC<Props> = memo(({ exchange, tradingSymbol }) => {
   const { theme } = useTheme();
   const stockRef = useRef<HTMLDivElement | null>(null);
+
+  // Memoize the script configuration to prevent recreation on every render
+  const scriptConfig = useMemo(() => ({
+    autosize: true,
+    symbol: `${exchange}:${tradingSymbol}`,
+    timezone: "Etc/UTC",
+    theme: theme === "dark" ? "dark" : "light",
+  }), [exchange, tradingSymbol, theme]);
 
   useEffect(() => {
     const script = document.createElement("script");
@@ -18,12 +26,7 @@ const ChartSymbol: React.FC<Props> = ({ exchange, tradingSymbol }) => {
       "https://s3.tradingview.com/external-embedding/embed-widget-advanced-chart.js";
     script.type = "text/javascript";
     script.async = true;
-    script.innerHTML = JSON.stringify({
-      autosize: true,
-      symbol: `${exchange}:${tradingSymbol}`,
-      timezone: "Etc/UTC",
-      theme: theme === "dark" ? "dark" : "light",
-    });
+    script.innerHTML = JSON.stringify(scriptConfig);
     stockRef.current?.appendChild(script);
 
     return () => {
@@ -31,7 +34,7 @@ const ChartSymbol: React.FC<Props> = ({ exchange, tradingSymbol }) => {
         stockRef.current.innerHTML = "";
       }
     };
-  }, [exchange, tradingSymbol, theme]);
+  }, [scriptConfig]);
 
   return (
     <div className="h-96">
@@ -41,6 +44,8 @@ const ChartSymbol: React.FC<Props> = ({ exchange, tradingSymbol }) => {
       ></div>
     </div>
   );
-};
+});
+
+ChartSymbol.displayName = "ChartSymbol";
 
 export default ChartSymbol;

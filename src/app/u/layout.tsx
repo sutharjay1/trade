@@ -12,7 +12,9 @@ export default function RootLayout({
   return (
     <div className={cn("min-h-screen", geistSans.className)}>
       <Banner />
-      {children}
+      
+      
+      <div className="max-w-7xl mx-auto px-4 md:px-0">{children}</div>
     </div>
   );
 }
