@@ -78,7 +78,6 @@ const Chart = ({ params }: Props) => {
 
   return (
     <div className="grid  flex-grow h-full">
-      {stockParam}
       <div
         className="tradingview-widget-container overflow-hidden h-screen flex-1 flex-grow "
         ref={stockRef}
